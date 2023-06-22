@@ -93,7 +93,7 @@ void MeshFitterInference<Impl, typeCrop>::postprocess(std::shared_ptr<uint8_t> b
 		if(objects.size())
 		{
 			Context& obj = objects[data["objects@current_id"].get<int>()];
-			objectFromPredict(predict, obj, INPUT_SIZE, cv::Size2i(imgShape[1].get_as<int>(), imgShape[0].get_as<int>()));
+			objectFromPredict(predict, obj, INPUT_SIZE, cv::Size2i(imgShape[1].get<int64_t>(), imgShape[0].get<int64_t>()));
 		}
 		else
 		{
@@ -101,7 +101,7 @@ void MeshFitterInference<Impl, typeCrop>::postprocess(std::shared_ptr<uint8_t> b
 			tdv::data::Context face;
 			face["id"] = 0l;
 			face["class"] = "face";
-			objectFromPredict(predict, face, INPUT_SIZE, cv::Size2i(imgShape[1].get_as<int>(), imgShape[0].get_as<int>()));
+			objectFromPredict(predict, face, INPUT_SIZE, cv::Size2i(imgShape[1].get<int64_t>(), imgShape[0].get<int64_t>()));
 			objects.push_back(std::move(face));
 		}
 	}

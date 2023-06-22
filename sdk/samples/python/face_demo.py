@@ -32,7 +32,7 @@ def get_crop(obj, image):
 
     return crop_image
 
-def get_objects_with_max_confidence(data):
+def get_objects_with_max_confidence(data, result):
     max_confidence = 0
     index_max_confidence = 0
     for i in range(len(data["objects"])):
@@ -40,7 +40,8 @@ def get_objects_with_max_confidence(data):
         if confidence > max_confidence:
             index_max_confidence = i
 
-    return data["objects"][index_max_confidence]
+    result["objects"] = []
+    result["objects"].push_back(data["objects"][index_max_confidence])
 
 def draw_bbox(obj, img, output, color=(0, 255, 0)):
     rect = obj["bbox"]
@@ -56,19 +57,19 @@ def draw_points(obj, img, output):
 
     point_size = 3 if width * height > 480 * 320 else 1
 
-    fitter = obj["fitter"]
-    for points in fitter["keypoints"]:
+    for points in obj["keypoints"]:
         img = cv2.circle(img, (int(points[0].get_value() * img.shape[1]), int(points[1].get_value() * img.shape[0])), 1,
                          (0, 255, 0), point_size)
-    img = cv2.circle(img, (int(fitter["left_eye"][0].get_value() * img.shape[1]), int(fitter["left_eye"][1].get_value() * img.shape[0])),
+
+    img = cv2.circle(img, (int(obj["left_eye"]["proj"][0].get_value() * img.shape[1]), int(obj["left_eye"]["proj"][1].get_value() * img.shape[0])),
                      1, (0, 0, 255), point_size)
-    img = cv2.circle(img, (int(fitter["right_eye"][0].get_value() * img.shape[1]), int(fitter["right_eye"][1].get_value() * img.shape[0])),
+    img = cv2.circle(img, (int(obj["right_eye"]["proj"][0].get_value() * img.shape[1]), int(obj["right_eye"]["proj"][1].get_value() * img.shape[0])),
                      1, (0, 0, 255), point_size)
-    img = cv2.circle(img, (int(fitter["mouth"][0].get_value() * img.shape[1]), int(fitter["mouth"][1].get_value() * img.shape[0])),
+    img = cv2.circle(img, (int(obj["mouth"]["proj"][0].get_value() * img.shape[1]), int(obj["mouth"]["proj"][1].get_value() * img.shape[0])),
                      1, (0, 0, 255), point_size)
 
     if output == "yes":
-        print(f'left eye ({int(fitter["left_eye"][0].get_value() * img.shape[1])}, {int(fitter["left_eye"][1].get_value() * img.shape[0])}) right eye ({int(fitter["right_eye"][0].get_value() * img.shape[1])}, {int(fitter["right_eye"][1].get_value() * img.shape[0])}) mouth ({int(fitter["mouth"][0].get_value() * img.shape[1])}, {int(fitter["mouth"][1].get_value() * img.shape[0])})')
+        print(f'left eye ({int(obj["left_eye"]["proj"][0].get_value() * img.shape[1])}, {int(obj["left_eye"]["proj"][1].get_value() * img.shape[0])}) right eye ({int(obj["right_eye"]["proj"][0].get_value() * img.shape[1])}, {int(obj["right_eye"]["proj"][1].get_value() * img.shape[0])}) mouth ({int(obj["mouth"]["proj"][0].get_value() * img.shape[1])}, {int(obj["mouth"]["proj"][1].get_value() * img.shape[0])})')
 
     return img
 
@@ -89,9 +90,7 @@ def landmarks_demo(sdk_path, img_path, window, output):
     ioData = service.create_context({"image": imgCtx})
 
     face_detector(ioData)
-
-    for obj in ioData["objects"]:
-        mesh_fitter(obj)
+    mesh_fitter(ioData)
 
     for obj in ioData["objects"]:
         img = draw_bbox(obj, img, output)
@@ -150,7 +149,8 @@ def recognition_demo(sdk_path, img_path_1, img_path_2, window, output):
     face_detector(ioData_img1)
     if not len(ioData_img1["objects"]):
         raise Exception(f"no face detected on {img_path_1}")
-    obj1 = get_objects_with_max_confidence(ioData_img1)
+    obj1 = service.create_context({"image": imgCtx_img1})
+    get_objects_with_max_confidence(ioData_img1, obj1)
 
     img2: np.ndarray = cv2.imread(img_path_2, cv2.IMREAD_COLOR)
     input_image2: np.ndarray = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
@@ -163,7 +163,9 @@ def recognition_demo(sdk_path, img_path_1, img_path_2, window, output):
     face_detector(ioData_img2)
     if not len(ioData_img2["objects"]):
         raise Exception(f"no face detected on {ioData_img2}")
-    obj2 = get_objects_with_max_confidence(ioData_img2)
+
+    obj2 = service.create_context({"image": imgCtx_img2})
+    get_objects_with_max_confidence(ioData_img2, obj2)
 
     mesh_fitter(obj1)
     recognizer(obj1)
@@ -172,19 +174,19 @@ def recognition_demo(sdk_path, img_path_1, img_path_2, window, output):
     recognizer(obj2)
 
     matcherData = service.create_context({"verification": {"objects": []}})
-    matcherData["verification"]["objects"].push_back(obj1)
-    matcherData["verification"]["objects"].push_back(obj2)
+    matcherData["verification"]["objects"].push_back(obj1["objects"][0])
+    matcherData["verification"]["objects"].push_back(obj2["objects"][0])
 
     matcher(matcherData)
     verdict = matcherData["verification"]["result"]["verdict"].get_value()
     distance = matcherData["verification"]["result"]["distance"].get_value()
 
     color = (0, 255, 0) if verdict else (0, 0, 255)
-    img1 = draw_bbox(obj1, img1, output, color)
-    img2 = draw_bbox(obj2, img2, output, color)
+    img1 = draw_bbox(obj1["objects"][0], img1, output, color)
+    img2 = draw_bbox(obj2["objects"][0], img2, output, color)
 
-    crop1 = get_crop(obj1, img1)
-    crop2 = get_crop(obj2, img2)
+    crop1 = get_crop(obj1["objects"][0], img1)
+    crop2 = get_crop(obj2["objects"][0], img2)
 
     crop1 = cv2.resize(crop1, (320, 480))
     crop2 = cv2.resize(crop2, (320, 480))
