@@ -30,11 +30,11 @@ void ONNXRuntimeEnvironment::OrtCheckStatus(OrtStatus* status) {
 ONNXRuntimeEnvironment::ONNXRuntimeEnvironment(const Context& config) : ort_api (OnnxRuntimeAdapter::GetInstance(config)->GetApi()), dynamic_batch(false)
 {
 	const bool enable_trace = config.get<bool>("enable_trace", false);
-	const int intra_op_num_threads = config.get<long>("intra_op_num_threads", 1);
-	const int execution_mode = config.get<long>("execution_mode", 0);
-	const int inter_op_num_threads = config.get<long>("inter_op_num_threads", 1);
+	const int intra_op_num_threads = config.get<int64_t>("intra_op_num_threads", 1);
+	const int execution_mode = config.get<int64_t>("execution_mode", 0);
+	const int inter_op_num_threads = config.get<int64_t>("inter_op_num_threads", 1);
 	const void* model_buffer = config["model_buffer"].get<char*>();
-	const unsigned long model_buffer_size = config["model_buffer_size"].get<unsigned long>();
+	const uint64_t model_buffer_size = config["model_buffer_size"].get<uint64_t>();
 
 	// Initialize environment, could use ORT_LOGGING_LEVEL_VERBOSE to get more information
 	// NOTE: Only one instance of env can exist at any point in time
@@ -77,7 +77,7 @@ ONNXRuntimeEnvironment::ONNXRuntimeEnvironment(const Context& config) : ort_api 
 	}
 
 	if(config["use_cuda"].get<bool>()){
-		int device_id = config.get<long>("device_id",  0);
+		int device_id = config.get<int64_t>("device_id",  0);
 #ifdef ONNXRT_OBSOLETE_API
 		OrtCheckStatus(OnnxRuntimeAdapter::GetInstance(config)->SessionOptionsAppendExecutionProvider_CUDA(session_options, device_id));
 #else
@@ -113,7 +113,6 @@ ONNXRuntimeEnvironment::ONNXRuntimeEnvironment(const Context& config) : ort_api 
 	OrtCheckStatus(ort_api->SessionGetInputCount(session, &numInputNodes));
 	OrtCheckStatus(ort_api->SessionGetOutputCount(session, &numOutputNodes));
 	ONNXTensorElementDataType inputType, outputType;
-
 	for(size_t i=0; i<numInputNodes; ++i)
 	{
 		char* input_name;
@@ -135,7 +134,7 @@ ONNXRuntimeEnvironment::ONNXRuntimeEnvironment(const Context& config) : ort_api 
 
 		dynamic_batch.push_back(input_dims[0] == -1);
 		if (dynamic_batch.back())
-			input_dims[0] = 1;	// default value
+			input_dims[0] = config["batch_size"].get<size_t>();
 
 		// Quick fix for person dim of HAR input tensor
 		// TODO: proper fix
@@ -163,7 +162,7 @@ ONNXRuntimeEnvironment::ONNXRuntimeEnvironment(const Context& config) : ort_api 
 	OrtCheckStatus(ort_api->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info));
 }
 
-bool ONNXRuntimeEnvironment::adjust_batch_size(size_t input, long batch_size)
+bool ONNXRuntimeEnvironment::adjust_batch_size(size_t input, int64_t batch_size)
 {
 	if ((input < inputShapes.size()) && dynamic_batch[input])
 	{
@@ -188,7 +187,7 @@ std::shared_ptr<uint8_t> ONNXRuntimeEnvironment::infer(std::vector<void*> input_
 	for(size_t i = 0; i< inputNames.size(); ++i)
 	{
 		OrtValue *input_tensor = nullptr;
-		unsigned long data_size = inputSizes[i]*OrtTypeTraits::tSize(inputTypes[i]);
+		uint64_t data_size = inputSizes[i]*OrtTypeTraits::tSize(inputTypes[i]);
 		OrtCheckStatus(ort_api->CreateTensorWithDataAsOrtValue(memory_info,
 															   static_cast<uint8_t*>(input_data[i])+p_data_len,
 															   data_size,
@@ -250,7 +249,7 @@ std::shared_ptr<uint8_t> ONNXRuntimeEnvironment::infer(std::vector<void*> input_
 		{
 			void* parr = nullptr;
 			OrtCheckStatus(ort_api->GetTensorMutableData(output_tensor, &parr));
-			unsigned long data_size = outputSizes[i]*OrtTypeTraits::tSize(outputTypes[i]);
+			uint64_t data_size = outputSizes[i]*OrtTypeTraits::tSize(outputTypes[i]);
 			memcpy((buff + p_data_len), parr, data_size);
 			p_data_len += data_size;
 			ort_api->ReleaseValue(output_tensor);
@@ -263,6 +262,11 @@ std::shared_ptr<uint8_t> ONNXRuntimeEnvironment::infer(std::vector<void*> input_
 const std::vector<std::vector<int64_t>>& ONNXRuntimeEnvironment::getInputShapes() const
 {
 	return inputShapes;
+}
+
+const std::vector<bool>& ONNXRuntimeEnvironment::getDynamicBatchEnabled() const
+{
+	return dynamic_batch;
 }
 
 const std::vector<std::vector<int64_t>>& ONNXRuntimeEnvironment::getOutputShapes() const

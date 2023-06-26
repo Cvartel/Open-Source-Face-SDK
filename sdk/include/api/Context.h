@@ -65,7 +65,7 @@ public:
 		typedef typename std::conditional<isConst, const value_type&, value_type&>::type	reference;
 		typedef const value_type&															const_reference;
 
-		ContextArrayIterator(const Context& ctx, long long index);
+		ContextArrayIterator(const Context& ctx, int64_t index);
 		ContextArrayIterator(const Context& ctx, const std::string& key);
 
 		ContextArrayIterator(const ContextArrayIterator& iter);
@@ -174,13 +174,13 @@ public:
 	void push_back(Context&& data);
 
 	bool getBool() const;
-	long getLong() const;
+	int64_t getLong() const;
 	double getDouble() const;
 	std::string getString() const;
 	unsigned char* getDataPtr() const;
 
 	void setBool(bool val);
-	void setLong(long val);
+	void setLong(int64_t val);
 	void setDouble(double val);
 	void setString(const char* str);
 	void setString(const std::string& str);
@@ -226,12 +226,12 @@ public:
 };
 
 template<bool isConst>
-Context::ContextArrayIterator<isConst>::ContextArrayIterator(const Context& ctx, long long index) :
+Context::ContextArrayIterator<isConst>::ContextArrayIterator(const Context& ctx, int64_t index) :
 	base_(ctx), curr_(nullptr), isObj_(ctx.isObject())
 {
 	length_ = TDVContext_getLength(base_.handle_, &(base_.eh_));
 	checkException(base_.eh_);
-	index_ = (index > -1) ? (std::min<size_t>)(static_cast<unsigned long>(index), length_) : length_;
+	index_ = (index > -1) ? (std::min<size_t>)(static_cast<size_t>(index), length_) : length_;
 	if(index_ < length_) {
 		if(isObj_)
 		{
@@ -584,8 +584,8 @@ inline double Context::getDouble() const {
 	return ret;
 }
 
-inline long Context::getLong() const {
-	long ret = TDVContext_getLong(handle_, &eh_);
+inline int64_t Context::getLong() const {
+	int64_t ret = TDVContext_getLong(handle_, &eh_);
 	checkException(eh_);
 	return ret;
 }
@@ -622,7 +622,7 @@ inline void Context::setString(const std::string& str) {
 	checkException(eh_);
 }
 
-inline void Context::setLong(long val) {
+inline void Context::setLong(int64_t val) {
 	TDVContext_putLong(handle_, val, &eh_);
 	checkException(eh_);
 }

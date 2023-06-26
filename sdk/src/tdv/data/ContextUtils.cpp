@@ -2,6 +2,8 @@
 
 #include <tdv/data/ContextUtils.h>
 #include <iostream>
+
+
 namespace tdv
 {
 namespace data
@@ -48,8 +50,8 @@ void cvMatToBsm(Context& bsmCtx, const cv::Mat& img, bool copy)
 	bsmCtx["dtype"] = CvTypeToStr.at(img.depth());
 	bsmCtx.erase("shape");
 	for(int i = 0; i < img.dims; ++i)
-		bsmCtx["shape"].push_back(static_cast<long>(img.size[i]));
-	bsmCtx["shape"].push_back(static_cast<long>(img.channels()));
+		bsmCtx["shape"].push_back(static_cast<int64_t>(img.size[i]));
+	bsmCtx["shape"].push_back(static_cast<int64_t>(img.channels()));
 }
 
 cv::Mat bsmToCvMat(const Context& bsmCtx, bool copy)
@@ -59,7 +61,7 @@ cv::Mat bsmToCvMat(const Context& bsmCtx, bool copy)
 	int ndims = static_cast<int>(bsmCtx.at("shape").size());
 	std::vector<int> dims;
 	for(const auto& dim : bsmCtx.at("shape"))
-		dims.push_back(static_cast<int>(dim.get<long>()));
+		dims.push_back(static_cast<int>(dim.get<int64_t>()));
 
 	cv::Mat img(ndims-1, dims.data(), CV_MAKETYPE(type,dims.back()), buff.get());
 	return copy ? img.clone() : img;

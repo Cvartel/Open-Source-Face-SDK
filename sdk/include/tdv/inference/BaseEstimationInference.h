@@ -67,7 +67,7 @@ template <typename Impl, TypeCrop typeCrop>
 BaseEstimationInference<Impl, typeCrop>::BaseEstimationInference(const tdv::data::Context& config):
 	ONNXModule<Impl>(config)
 {
-	module_version_ = config.get<long>("model_version", 1);
+	module_version_ = config.get<int64_t>("model_version", 1);
 }
 
 template <typename Impl, TypeCrop typeCrop>
@@ -122,7 +122,7 @@ cv::Mat BaseEstimationInference<Impl, typeCrop>::blobFromImage(cv::Mat& image, i
 
 	output.create(4, sz, ddepth);
 
-	cv::Mat ch[nch];
+	std::vector<cv::Mat> ch(nch);
 
 	for( int j = 0; j < nchannel; j++ )
 		ch[j] = cv::Mat(image.rows, image.cols, ddepth, output.ptr(0,j));

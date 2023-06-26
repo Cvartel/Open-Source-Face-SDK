@@ -150,7 +150,7 @@ TDV_PUBLIC void TDVContext_putStr(HContext* ctx, const char* str, ContextEH ** e
 }
 
 
-TDV_PUBLIC void TDVContext_putLong(HContext * ctx, long val, ContextEH ** eh)
+TDV_PUBLIC void TDVContext_putLong(HContext * ctx, int64_t val, ContextEH ** eh)
 {
 	try {
 		*reinterpret_cast<internal::Context*>(ctx) = val;
@@ -188,7 +188,7 @@ TDV_PUBLIC void TDVContext_freePtr(void * ptr)
 	free(ptr);
 }
 
-TDV_PUBLIC unsigned char* TDVContext_allocDataPtr(HContext * ctx, unsigned long size, ContextEH ** eh)
+TDV_PUBLIC unsigned char* TDVContext_allocDataPtr(HContext * ctx, uint64_t size, ContextEH ** eh)
 {
 	unsigned char* data = nullptr;
 	try {
@@ -209,7 +209,7 @@ TDV_PUBLIC unsigned char* TDVContext_allocDataPtr(HContext * ctx, unsigned long 
 }
 
 
-TDV_PUBLIC unsigned char* TDVContext_putDataPtr(HContext * ctx, unsigned char* val, unsigned long copy_sz, ContextEH ** eh)
+TDV_PUBLIC unsigned char* TDVContext_putDataPtr(HContext * ctx, unsigned char* val, uint64_t copy_sz, ContextEH ** eh)
 {
 	unsigned char* data = nullptr;
 	try {
@@ -242,7 +242,7 @@ TDV_PUBLIC unsigned char* TDVContext_putDataPtr(HContext * ctx, unsigned char* v
 	return data;
 }
 
-TDV_PUBLIC unsigned char* TDVContext_putConstDataPtr(HContext * ctx, const unsigned char* val, unsigned long copy_sz, ContextEH ** eh)
+TDV_PUBLIC unsigned char* TDVContext_putConstDataPtr(HContext * ctx, const unsigned char* val, uint64_t copy_sz, ContextEH ** eh)
 {
 	unsigned char* data = nullptr;
 	try {
@@ -264,7 +264,7 @@ TDV_PUBLIC unsigned char* TDVContext_putConstDataPtr(HContext * ctx, const unsig
 	return data;
 }
 
-TDV_PUBLIC unsigned long TDVContext_getLength(HContext * ctx, ContextEH ** eh)
+TDV_PUBLIC uint64_t TDVContext_getLength(HContext * ctx, ContextEH ** eh)
 {
 	try {
 		return reinterpret_cast<internal::Context*>(ctx)->size();
@@ -276,7 +276,7 @@ TDV_PUBLIC unsigned long TDVContext_getLength(HContext * ctx, ContextEH ** eh)
 	}
 }
 
-TDV_PUBLIC char** TDVContext_getKeys(HContext * ctx, unsigned long length, ContextEH ** eh)
+TDV_PUBLIC char** TDVContext_getKeys(HContext * ctx, uint64_t length, ContextEH ** eh)
 {
 	char** buff = nullptr;
 	try {
@@ -420,9 +420,9 @@ TDV_PUBLIC const char* TDVContext_getStr(HContext * ctx, char* buff, ContextEH *
 	return buff;
 }
 
-TDV_PUBLIC unsigned long TDVContext_getStrSize(HContext * ctx, ContextEH ** eh)
+TDV_PUBLIC uint64_t TDVContext_getStrSize(HContext * ctx, ContextEH ** eh)
 {
-	unsigned long size_s;
+	uint64_t size_s;
 	try {
 		size_s = reinterpret_cast<internal::Context*>(ctx)->as<std::string>().length();
 	} catch (std::exception& e ) {
@@ -433,15 +433,12 @@ TDV_PUBLIC unsigned long TDVContext_getStrSize(HContext * ctx, ContextEH ** eh)
 	return size_s;
 }
 
-TDV_PUBLIC long TDVContext_getLong(HContext * ctx, ContextEH ** eh)
+TDV_PUBLIC int64_t TDVContext_getLong(HContext * ctx, ContextEH ** eh)
 {
-	long data;
+	int64_t data;
 	try {
 		internal::Context* i_ctx = reinterpret_cast<internal::Context*>(ctx);
-		if(i_ctx->is<int>())
-			data = i_ctx->get<int>();
-		else
-			data = i_ctx->get<long>();
+		data = i_ctx->get<int64_t>();
 	} catch (std::exception& e ) {
 		if(!eh) throw;
 		*eh = new ContextEH(new internal::Error(0x2353ead7, e.what()),

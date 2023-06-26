@@ -12,6 +12,7 @@
 #include <memory>
 #include <tdv/data/Context.h>
 
+
 namespace tdv
 {
 
@@ -26,10 +27,6 @@ public:
 	ProcessingBlock(const data::Context& config = data::Context()) { }
 	virtual ~ProcessingBlock() = default;
 	virtual void operator ()(data::Context&) = 0;
-	virtual tdv::data::Context getBlockInfo()
-	{
-		return tdv::data::Context();
-	};
 };
 
 } // namespace modules

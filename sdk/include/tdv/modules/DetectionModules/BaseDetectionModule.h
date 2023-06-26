@@ -71,7 +71,7 @@ cv::Mat blobFromImage(cv::Mat& image, int nchannel = 3, bool needBGR=false, cons
 inline float area(const std::vector<float>& v) {
 	if (v.size()!=4)
 		return 0;
-	long area = (v[2]-v[0])*(v[3]-v[1]);
+	float area = (v[2]-v[0])*(v[3]-v[1]);
 	return (area > 0) ? area : 0;
 }
 
@@ -296,8 +296,8 @@ tdv::data::Context BaseDetectionModule<Impl>::processOutputData(std::vector<std:
 
 	NMSFast_(localBoxes, localConfidences, 0.0, IOU_THRESH, indices);
 	const auto offset = metadata.at("objects@input")[0].at("resize_offset").get<std::tuple<int, int, double>>();
-	const auto img_height = metadata.at("objects@input")[0].at("image_shape")[0].get<long>();
-	const auto img_width = metadata.at("objects@input")[0].at("image_shape")[1].get<long>();
+	const auto img_height = metadata.at("objects@input")[0].at("image_shape")[0].get<int64_t>();
+	const auto img_width = metadata.at("objects@input")[0].at("image_shape")[1].get<int64_t>();
 
 	const Context& imageInput = metadata.at("image");
 	std::shared_ptr<cv::Mat> image = std::shared_ptr<cv::Mat>(new cv::Mat(tdv::data::bsmToCvMat(imageInput, true)));
@@ -305,9 +305,10 @@ tdv::data::Context BaseDetectionModule<Impl>::processOutputData(std::vector<std:
 	tdv::data::Context objects;
 	for (size_t i = 0; i < indices.size(); i++) {
 		tdv::data::Context object;
-		object["id"] = static_cast<long>(i);
+		object["id"] = static_cast<int64_t>(i);
 		object["class"] = Impl::CLASS_NAME;
 		object["confidence"] = (double)localConfidences[indices[i]];
+		object["score"] = (double)localConfidences[indices[i]];
 		std::vector<float>& lbox = localBoxes[indices[i]];
 		// convert to original image normalized coordinates
 		lbox[0] = (lbox[0] * std::get<2>(offset) - std::get<0>(offset)) / img_width;

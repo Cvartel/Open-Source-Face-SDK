@@ -55,7 +55,7 @@ double distance(const tdv::data::Context& a, const tdv::data::Context& b){
 	return l2_distance(
 		a["template"].get<std::vector<float>>().data(),
 		b["template"].get<std::vector<float>>().data(),
-		a["template_size"].get<long>()
+		a["template_size"].get<int64_t>()
 	);
 }
 

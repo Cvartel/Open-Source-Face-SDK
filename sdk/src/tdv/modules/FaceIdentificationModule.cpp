@@ -1,16 +1,12 @@
 #include <new>
-#include <tuple>
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
 
 #include <tdv/data/ContextUtils.h>
 #include <tdv/utils/recognizer_utils/RecognizerUtils.h>
 #include <tdv/modules/FaceIdentificationModule.h>
 #include <tdv/utils/rassert/RAssert.h>
-
-
 
 namespace {
 
@@ -19,7 +15,7 @@ using namespace tdv::utils::recognizer_utils;
 
 template <typename T>
 T clip(const T& n, const T& lower, const T& upper) {
-	return std::max(lower, std::min(n, upper));
+	return std::max<T>(lower, std::min<T>(n, upper));
 }
 
 cv::Mat blobFromImage(cv::Mat& image, int nchannel = 3, const int ddepth=CV_32F) {
@@ -38,7 +34,7 @@ cv::Mat blobFromImage(cv::Mat& image, int nchannel = 3, const int ddepth=CV_32F)
 
 	output.create(3, sz, ddepth);
 
-	cv::Mat ch[nch];
+	std::vector<cv::Mat> ch(nch);
 
 	for( int j = 0; j < nchannel; j++ )
 		ch[j] = cv::Mat(image.rows, image.cols, ddepth, output.ptr(j));
@@ -52,8 +48,8 @@ cv::Mat blobFromImage(cv::Mat& image, int nchannel = 3, const int ddepth=CV_32F)
 void processObject(cv::Mat &image, const tdv::data::Context data, const int input_width, const int input_height){
 	const tdv::data::Context& obj = data["objects"][data["objects@current_id"].get<int>()];
 
-	int img_width = data["image"]["shape"][1].get<long>();
-	int img_height = data["image"]["shape"][0].get<long>();
+	int img_width = data["image"]["shape"][1].get<int64_t>();
+	int img_height = data["image"]["shape"][0].get<int64_t>();
 
 	if (obj.contains("keypoints")){
 		const cv::Matx23f crop2image = makeCrop2ImageByPoints(obj, image, (std::max)(input_width, input_height));
@@ -145,7 +141,7 @@ void FaceIdentificationModule::postprocess(std::shared_ptr<uint8_t> buffer, tdv:
 		if(objects.size())
 		{
 			Context& obj = objects[data["objects@current_id"].get<int>()];
-			obj["template_size"] = (long)embeds.size();
+			obj["template_size"] = (int64_t)embeds.size();
 			obj["template"] = std::move(embeds);
 		}
 		else
@@ -154,7 +150,7 @@ void FaceIdentificationModule::postprocess(std::shared_ptr<uint8_t> buffer, tdv:
 			tdv::data::Context face;
 			face["id"] = 0l;
 			face["class"] = "face";
-			face["template_size"] = (long)embeds.size();
+			face["template_size"] = (int64_t)embeds.size();
 			face["template"] = std::move(embeds);
 			objects.push_back(std::move(face));
 		}

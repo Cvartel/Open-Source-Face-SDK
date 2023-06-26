@@ -53,11 +53,12 @@ public:
 	~ONNXRuntimeEnvironment();
 
 	std::shared_ptr<uint8_t> infer(std::vector<void*> input_data);
-	bool adjust_batch_size(size_t input, long batch_size);
+	bool adjust_batch_size(size_t input, int64_t batch_size);
 
 	const std::vector<std::vector<int64_t>>& getInputShapes() const;
 	const std::vector<std::vector<int64_t>>& getOutputShapes() const;
 	const std::vector<ONNXTensorElementDataType>& getOutputTypes() const;
+	const std::vector<bool>& getDynamicBatchEnabled() const;
 
 
 private:
@@ -83,7 +84,7 @@ private:
 	std::vector<bool> dynamic_batch;
 };
 
-}  // cnn namespace
+}  // modules namespace
 }  // tdv namespace
 
 #endif // ONNXRuntimeEnvironment_H

@@ -87,6 +87,10 @@ void putIntoJson(NJSON& json, const std::string& field, const Context& ctx)
 		transferFunc<long>::put(json, field, ctx);
 	else if(ctx.is<unsigned long>())
 		transferFunc<unsigned long>::put(json, field, ctx);
+	else if(ctx.is<long long>())
+		transferFunc<long long>::put(json, field, ctx);
+	else if(ctx.is<unsigned long long>())
+		transferFunc<unsigned long long>::put(json, field, ctx);
 	else if(ctx.is<short>())
 		transferFunc<short>::put(json, field, ctx);
 	else if(ctx.is<unsigned short>())

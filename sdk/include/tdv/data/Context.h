@@ -662,8 +662,9 @@ public:
 	get_as() const // unsigned integer conversion
 	{
 		return static_cast<T>(retype_as<
-							uint64_t, 	uint32_t, 	uint16_t, 	uint8_t,
-							int64_t, 	int32_t, 	int16_t, 	int8_t>());
+							unsigned long long, unsigned long,  unsigned int, unsigned short, unsigned char,
+							long long, long, int, short, char,
+							double, float>());
 	}
 
 	template<class T>
@@ -671,8 +672,9 @@ public:
 	get_as() const // signed integer conversion
 	{
 		return static_cast<T>(retype_as<
-							int64_t, 	int32_t, 	int16_t, 	int8_t,
-							uint64_t, 	uint32_t, 	uint16_t, 	uint8_t>());
+				long long, long, int, short, char,
+				unsigned long long, unsigned long,  unsigned int, unsigned short, unsigned char,
+				double,  float>());
 	}
 
 	template<class T>
@@ -680,11 +682,12 @@ public:
 	get_as() const
 	{
 		return static_cast<T>(retype_as<
-						   	float, 		double,
-							uint64_t, 	int64_t,
-							uint32_t, 	int32_t,
-							uint16_t, 	int16_t,
-							uint8_t, 	int8_t>());
+				double, 		 float,
+							unsigned long long, 	 long long,
+							unsigned long, 	 long,
+							unsigned int, int,
+							unsigned short, short,
+							unsigned char, char>());
 	}
 
 	template<class T>
@@ -693,11 +696,12 @@ public:
 	{
 		return static_cast<T>(retype_as<
 							bool,
-							uint64_t, 	int64_t,
-							uint32_t, 	int32_t,
-							uint16_t, 	int16_t,
-							uint8_t, 	int8_t,
-							float, 		double>());
+							unsigned long long, 	 long long,
+							unsigned long, 	 long,
+							unsigned int, int,
+							unsigned short, short,
+							unsigned char, char,
+							double, 		  float>());
 	}
 
 	template<class T>

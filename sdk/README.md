@@ -1,4 +1,4 @@
-# Cvartel Open Source SDK
+# Cvartel Open Source Face SDK
 
 ## Available Models
 ||||  

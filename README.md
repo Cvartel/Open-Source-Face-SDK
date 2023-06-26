@@ -1,7 +1,7 @@
 
-## Cvartel Open Source SDK
+## Cvartel Open Source Face SDK
 
-[Cvartel SDK](sdk/) is an open-source library that analyzes images to identify human faces, bodies and skeletal joints. The library is top rated in NIST FRVT with 99.62% face recognition accuracy and is available for C++, Python, C#, and Java programming languages on Windows and Linux.
+[Cvartel Face SDK](sdk/) is an open-source library that analyzes images to identify human faces, bodies and skeletal joints. The library is top rated in NIST FRVT with 99.62% face recognition accuracy and is available for C++, Python, C#, and Java programming languages on Windows and Linux.
 It contains [Open Model Improvement and Domain Adaptation Scripts](open_midas/) which allows you to improve model performance for your specific tasks.
 
 |Face Detection and Landmarks|Face Recognition|Face Attributes|
