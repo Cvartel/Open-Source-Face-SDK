@@ -106,7 +106,7 @@ cv::Mat getCrop(const api::Context& obj, cv::Mat &image)
 	int height = static_cast<int>(rectCtx[3].getDouble() * img_h) - y;
 
 	cv::Rect rect(std::max(0, x - int(width * 0.25)), std::max(0, y - int(height * 0.25)),
-				  std::min(img_w, int(width * 1.5)), std::min(img_h, int(height * 1.5)));
+				  std::min(img_w - x, int(width * 1.5)), std::min(img_h - y, int(height * 1.5)));
 
 	return image(rect);
 }
