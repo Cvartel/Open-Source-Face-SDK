@@ -34,4 +34,4 @@ Feel free  to open an issue if you want to
 ## License
 
 [Affero GPLv3](http://www.gnu.org/licenses/agpl-3.0.html)
-Commercial-friendly licensing available. Contact us at info@cvartel.com.
+Commercial-friendly licensing available. Contact us at info@cvartel.ai.
