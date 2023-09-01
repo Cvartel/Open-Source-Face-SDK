@@ -340,7 +340,7 @@ inline Context& Context::operator=(const Context& other) {
 	return *this;
 }
 
-Context::operator ContextRef()
+inline Context::operator ContextRef()
 {
 	return ContextRef(handle_);
 }

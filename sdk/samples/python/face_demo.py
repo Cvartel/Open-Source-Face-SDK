@@ -12,7 +12,7 @@ def help_message():
     message = f"usage: {sys.argv[0]} [--mode detection | landmarks| recognition] " \
               " [--input_image <path to image>]" \
               " [--input_image2 <path to image>]" \
-              " [--sdk_path ..]" \
+              " [--sdk_path <path to models> by default download in package folder]" \
               " [--window <yes/no>]" \
               " [--output <yes/no>]"
     print(message)
@@ -57,19 +57,19 @@ def draw_points(obj, img, output):
 
     point_size = 3 if width * height > 480 * 320 else 1
 
-    for points in obj["keypoints"]:
-        img = cv2.circle(img, (int(points[0].get_value() * img.shape[1]), int(points[1].get_value() * img.shape[0])), 1,
+    for points in obj["keypoints"]["points"]:
+        img = cv2.circle(img, (int(points["x"].get_value() * img.shape[1]), int(points["y"].get_value() * img.shape[0])), 1,
                          (0, 255, 0), point_size)
 
-    img = cv2.circle(img, (int(obj["left_eye"]["proj"][0].get_value() * img.shape[1]), int(obj["left_eye"]["proj"][1].get_value() * img.shape[0])),
+    img = cv2.circle(img, (int(obj["keypoints"]["left_eye"]["proj"][0].get_value() * img.shape[1]), int(obj["keypoints"]["left_eye"]["proj"][1].get_value() * img.shape[0])),
                      1, (0, 0, 255), point_size)
-    img = cv2.circle(img, (int(obj["right_eye"]["proj"][0].get_value() * img.shape[1]), int(obj["right_eye"]["proj"][1].get_value() * img.shape[0])),
+    img = cv2.circle(img, (int(obj["keypoints"]["right_eye"]["proj"][0].get_value() * img.shape[1]), int(obj["keypoints"]["right_eye"]["proj"][1].get_value() * img.shape[0])),
                      1, (0, 0, 255), point_size)
-    img = cv2.circle(img, (int(obj["mouth"]["proj"][0].get_value() * img.shape[1]), int(obj["mouth"]["proj"][1].get_value() * img.shape[0])),
+    img = cv2.circle(img, (int(obj["keypoints"]["mouth"]["proj"][0].get_value() * img.shape[1]), int(obj["keypoints"]["mouth"]["proj"][1].get_value() * img.shape[0])),
                      1, (0, 0, 255), point_size)
 
     if output == "yes":
-        print(f'left eye ({int(obj["left_eye"]["proj"][0].get_value() * img.shape[1])}, {int(obj["left_eye"]["proj"][1].get_value() * img.shape[0])}) right eye ({int(obj["right_eye"]["proj"][0].get_value() * img.shape[1])}, {int(obj["right_eye"]["proj"][1].get_value() * img.shape[0])}) mouth ({int(obj["mouth"]["proj"][0].get_value() * img.shape[1])}, {int(obj["mouth"]["proj"][1].get_value() * img.shape[0])})')
+        print(f'left eye ({int(obj["keypoints"]["left_eye"]["proj"][0].get_value() * img.shape[1])}, {int(obj["keypoints"]["left_eye"]["proj"][1].get_value() * img.shape[0])}) right eye ({int(obj["keypoints"]["right_eye"]["proj"][0].get_value() * img.shape[1])}, {int(obj["keypoints"]["right_eye"]["proj"][1].get_value() * img.shape[0])}) mouth ({int(obj["keypoints"]["mouth"]["proj"][0].get_value() * img.shape[1])}, {int(obj["keypoints"]["mouth"]["proj"][1].get_value() * img.shape[0])})')
 
     return img
 
@@ -79,7 +79,7 @@ def landmarks_demo(sdk_path, img_path, window, output):
         raise Exception(f"not exist file {img_path}")
 
     face_detector = service.create_processing_block({"unit_type": "FACE_DETECTOR"})
-    mesh_fitter = service.create_processing_block({"unit_type": "MESH_FITTER"})
+    mesh_fitter = service.create_processing_block({"unit_type": "FITTER"})
 
     img: np.ndarray = cv2.imread(img_path, cv2.IMREAD_COLOR)
     input_image: np.ndarray = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -135,7 +135,7 @@ def recognition_demo(sdk_path, img_path_1, img_path_2, window, output):
 
     face_detector = service.create_processing_block({"unit_type": "FACE_DETECTOR"})
     recognizer = service.create_processing_block({"unit_type": "FACE_RECOGNIZER"})
-    mesh_fitter = service.create_processing_block({"unit_type": "MESH_FITTER"})
+    mesh_fitter = service.create_processing_block({"unit_type": "FITTER"})
     matcher = service.create_processing_block({"unit_type": "MATCHER_MODULE"})
 
     img1: np.ndarray = cv2.imread(img_path_1, cv2.IMREAD_COLOR)
@@ -204,7 +204,7 @@ def parse_args():
     parser.add_argument('--mode', default="detection", type=str)
     parser.add_argument('--input_image', type=str, required=True)
     parser.add_argument('--input_image2', type=str)
-    parser.add_argument('--sdk_path', default="../", type=str)
+    parser.add_argument('--sdk_path', default="", type=str)
     parser.add_argument('--window', default="yes", type=str)
     parser.add_argument('--output', default="yes", type=str)
 

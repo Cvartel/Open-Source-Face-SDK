@@ -68,17 +68,18 @@ void MeshFitterInference<Impl, typeCrop>::objectFromPredict(std::vector<float> &
 		ci_h = obj["bbox"][3].get<double>() * i_h - o_y * i_h ;
 	}
 
+	tdv::data::Context& points = key_points["points"];
 	for (int i = 0; i < predict.size() - 1; i += 3){
 		tdv::data::Context point;
-		point.push_back(static_cast<double>(o_x + (predict[i] / INPUT_SIZE) * (ci_w / i_w)));
-		point.push_back(static_cast<double>(o_y + (predict[i + 1] / INPUT_SIZE) * (ci_h / i_h)));
-		point.push_back(static_cast<double>(predict[i + 2] / INPUT_SIZE));
-		key_points.push_back(std::move(point));
+		point["x"] = static_cast<double>(o_x + (predict[i] / INPUT_SIZE) * (ci_w / i_w));
+		point["y"] = static_cast<double>(o_y + (predict[i + 1] / INPUT_SIZE) * (ci_h / i_h));
+		point["z"] = static_cast<double>(predict[i + 2] / INPUT_SIZE);
+		points.push_back(std::move(point));
 	}
 
-	obj["fitter_type"] = "mesh";
+	key_points["fitter_type"] = "mesh";
 
-	tdv::utils::recognizer_utils::constructFdaPonints2Context(obj);
+	tdv::utils::recognizer_utils::constructFdaPonints2Context(key_points);
 }
 
 

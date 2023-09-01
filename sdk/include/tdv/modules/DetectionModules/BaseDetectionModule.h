@@ -60,7 +60,7 @@ cv::Mat blobFromImage(cv::Mat& image, int nchannel = 3, bool needBGR=false, cons
 
 	output.create(4, sz, ddepth);
 
-	cv::Mat* ch = new cv::Mat[nch];
+	std::vector<cv::Mat> ch(nch);
 	for( int j = 0; j < nchannel; j++ )
 		ch[j] = cv::Mat(image.rows, image.cols, ddepth, output.ptr(0,j));
 
@@ -205,7 +205,7 @@ std::vector<std::vector<float>> BaseDetectionModule<Impl>::getOutputData(std::sh
 
 	size_t predict_count{static_cast<size_t>(shapes.front()[1])}, predict_shape{static_cast<size_t>(shapes.front()[2])};
 
-	RHAssert2(0x7b64809c, predict_shape == 6, "unsupported output shape");
+	RHAssert2(0x7b64809c, predict_shape == 6 ||  predict_shape == 21, "unsupported output shape");
 
 	std::vector<std::vector<float>> bboxes;
 

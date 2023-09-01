@@ -1,6 +1,13 @@
 torch
+torchvision
 imgaug
 matplotlib
 numpy
 seaborn
 IPython
+Pillow
+tqdm
+scikit-learn
+networkx
+opencv-python
+catboost

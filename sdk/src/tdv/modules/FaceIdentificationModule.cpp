@@ -52,7 +52,7 @@ void processObject(cv::Mat &image, const tdv::data::Context data, const int inpu
 	int img_height = data["image"]["shape"][0].get<int64_t>();
 
 	if (obj.contains("keypoints")){
-		const cv::Matx23f crop2image = makeCrop2ImageByPoints(obj, image, (std::max)(input_width, input_height));
+		const cv::Matx23f crop2image = makeCrop2ImageByPoints(obj["keypoints"], image, (std::max)(input_width, input_height));
 		warpAffine(image, image, crop2image, cv::Size(input_width, input_height));
 	}else{
 		const tdv::data::Context& rectCtx = obj["bbox"];

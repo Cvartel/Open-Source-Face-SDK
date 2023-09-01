@@ -100,7 +100,6 @@ protected:
 		std::copy(types.begin(), types.end(), std::back_inserter(outTypes));
 		return outTypes;
 	}
-
 private:
 	void readToBuffer(const std::string& filePath, char *result, int buffer_size);
 

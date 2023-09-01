@@ -28,9 +28,10 @@ cv::Point2f getSpecialPointCenter(
 	cv::Size2i size = cv::Size2i(1,1))
 {
 	double x = 0, y = 0;
+	const tdv::data::Context& points = context["points"];
 	for (const int& index : point_indexs){
-		x += context["keypoints"][index][0].get<double>();
-		y += context["keypoints"][index][1].get<double>();
+		x += points[index]["x"].get<double>();
+		y += points[index]["y"].get<double>();
 	}
 
 	return cv::Point2f(
@@ -42,7 +43,7 @@ void constructFdaPonints2Context(tdv::data::Context& fitter)
 {
 	std::vector<std::string> fda_string_mapping;
 
-	if(fitter["fitter_type"].get<std::string>() == "mesh")
+	if(fitter["fitter_type"].get<std::string>() != "fda")
 	{
 		fda_string_mapping = {
 		"left_eye_brow_left", "left_eye_brow_up", "left_eye_brow_right",    //   0   1   2
@@ -84,7 +85,15 @@ void construct_fda_points(
 		right_eye_center = {385, 387, 380, 373};
 		left_eye_center = {160, 158, 144, 153};
 	}
+	else if (fitter["fitter_type"].get<std::string>() == "tddfa")
+	{
+		fda_mapping =  {17, 19, 21, 22, 24, 26, 36, -1, 39, 42, -1, 45, 2, 31, 30, 35, 14, 48, 62, 54, 8};
+		mouth_center = {48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67};
+		right_eye_center = {36, 37, 38, 39, 40};
+		left_eye_center = {42, 43, 44, 45, 46};
+	}
 
+	const tdv::data::Context& points = fitter["points"];
 	for(size_t i = 0; i < fda_mapping.size(); ++i)
 	{
 		int ind = fda_mapping[i];
@@ -92,8 +101,8 @@ void construct_fda_points(
 		if(ind != -1)
 		{
 			cv::Point2f cvPoint(
-				fitter["keypoints"][ind][0].get<double>() * i_w,
-				fitter["keypoints"][ind][1].get<double>() * i_h
+				points[ind]["x"].get<double>() * i_w,
+				points[ind]["y"].get<double>() * i_h
 			);
 			dst_points.push_back(cvPoint);
 		} else {
@@ -101,7 +110,7 @@ void construct_fda_points(
 		}
 	}
 
-	if (fitter["fitter_type"].get<std::string>() == "mesh")
+	if (fitter["fitter_type"].get<std::string>() != "fda")
 	{
 		dst_points[18] = getSpecialPointCenter(fitter, mouth_center, cv::Size2i(i_w, i_h));
 		dst_points[7] = getSpecialPointCenter(fitter, left_eye_center, cv::Size2i(i_w, i_h));
@@ -253,6 +262,7 @@ cv::Matx23f estimate_scaled_rigid_transform(
 	}
 }
 
+// TO DO optimize
 cv::Matx23f makeCrop2ImageByPoints(const tdv::data::Context& fitter, cv::Mat& image, const int base_crop_size)
 {
 	std::vector<cv::Point2f> constructed_points;

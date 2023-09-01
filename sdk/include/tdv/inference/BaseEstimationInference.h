@@ -5,12 +5,14 @@
 #include <tuple>
 
 #include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-
 #include <tdv/data/ContextUtils.h>
 #include <tdv/modules/ONNXModule.h>
 #include <tdv/utils/rassert/RAssert.h>
 
+#undef max
+#undef min
 
 namespace{
 template <typename T>
@@ -18,8 +20,61 @@ T clip(const T& n, const T& lower, const T& upper) {
 	return std::max(lower, std::min(n, upper));
 }
 
+void parseRoiBoxFromBboxAndGetCrop(cv::Mat &image, tdv::data::Context &data){
+	tdv::data::Context& obj = data["objects"][data["objects@current_id"].get<int>()];
+	tdv::data::Context& rectCtx = obj["bbox"];
+	double left = rectCtx[0].get<double>() * image.cols;
+	double top = rectCtx[1].get<double>() * image.rows;
+	double right = rectCtx[2].get<double>() * image.cols;
+	double bottom = rectCtx[3].get<double>() * image.rows;
 
-void getSimpleCrop(cv::Mat &image, const tdv::data::Context data){
+	double old_size = (right - left + bottom - top) / 2;
+	double center_x = right - (right - left) / 2.0;
+	double center_y = bottom - (bottom - top) / 2.0 + old_size * 0.14;
+	int size = int(old_size * 1.58);
+
+
+	tdv::data::Context& roiBox = obj["roi_bbox"];
+	roiBox.push_back((center_x - size / 2) /  image.cols);
+	roiBox.push_back((center_y - size / 2) /  image.rows);
+	roiBox.push_back((center_x + size / 2) /  image.cols);
+	roiBox.push_back((center_y + size / 2) /  image.rows);
+
+	int sx = (int)round(center_x - size / 2);
+	int sy = (int)round(center_y - size / 2);
+	int ex = (int)round(center_x + size / 2);
+	int ey = (int)round(center_y + size / 2);
+
+	int dh = ey - sy, dw = ex - sx;
+	int dsx = 0, dsy = 0, dex = dw, dey = dh;
+
+	if (sx < 0){
+		dsx = -sx;
+		sx = 0;
+	}
+
+	if (ex > image.cols){
+		dex = dw - (ex - image.cols);
+		ex = image.cols;
+	}
+
+	 if (sy < 0){
+		dsy = -sy;
+		sy = 0;
+	 }
+
+	 if (ey > image.rows){
+		dey = dh - (ey - image.rows);
+		ey = image.rows;
+	 }
+
+	cv::Mat res(dh, dw, (image.channels() == 3 ? CV_8UC3 : CV_8UC1), cv::Scalar(0));
+	image(cv::Rect(cv::Point{sx, sy}, cv::Point{ex, ey})).copyTo(res(cv::Rect(cv::Point{dsx, dsy}, cv::Point{dex, dey})));
+
+	image = std::move(res);
+}
+
+void getSimpleCrop(cv::Mat &image, const tdv::data::Context &data){
 	const tdv::data::Context& obj = data["objects"][data["objects@current_id"].get<int>()];
 
 	const tdv::data::Context& rectCtx = obj["bbox"];
@@ -37,7 +92,8 @@ namespace modules {
 enum TypeCrop
 {
 	SIMPLE_CROP = 0,
-	KEYPOINTS_BASED_CROP = 1
+	KEYPOINTS_BASED_CROP = 1,
+	FDA_ROI_CROP = 2
 };
 
 
@@ -81,6 +137,8 @@ void BaseEstimationInference<Impl, typeCrop>::preprocess(tdv::data::Context& dat
 			getSimpleCrop(image, data);
 		}else if(typeCrop == KEYPOINTS_BASED_CROP){
 			tdv::data::keypointsBasedCrop(image, data);
+		}else if (typeCrop == FDA_ROI_CROP){
+			parseRoiBoxFromBboxAndGetCrop(image, data);
 		}
 	}
 

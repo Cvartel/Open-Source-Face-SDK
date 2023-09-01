@@ -7,7 +7,7 @@ add_definitions(-std=c++11)
 link_directories(${3RDPARTY_OPENCV_LIB_DIR})
 
 set(LIBS
-	open-source-sdk
+	open_source_sdk
 )
 
 if (CMAKE_GENERATOR MATCHES "Visual Studio")

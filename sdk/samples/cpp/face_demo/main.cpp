@@ -85,13 +85,14 @@ void drawPoints(const api::Context& obj, cv::Mat& img, std::string output){
 
 	int point_size = width * height > 320 * 480 ? 3 : 1;
 
-	for(const api::Context& point : obj["keypoints"])
-		cv::circle(img, cv::Point2f(point[0].getDouble() * img.cols, point[1].getDouble() * img.rows), 1, {0, 255, 0}, point_size);
-	cv::circle(img, cv::Point2f(obj["left_eye"]["proj"][0].getDouble() * img.cols, obj["left_eye"]["proj"][1].getDouble() * img.rows), 1, {0, 0, 255}, point_size);
-	cv::circle(img, cv::Point2f(obj["right_eye"]["proj"][0].getDouble() * img.cols, obj["right_eye"]["proj"][1].getDouble() * img.rows), 1, {0, 0, 255}, point_size);
-	cv::circle(img, cv::Point2f(obj["mouth"]["proj"][0].getDouble() * img.cols, obj["mouth"]["proj"][1].getDouble() * img.rows), 1, {0, 0, 255}, point_size);
+	const api::Context& keypoints = obj["keypoints"];
+	for(const api::Context& point : keypoints["points"])
+		cv::circle(img, cv::Point2f(point["x"].getDouble() * img.cols, point["y"].getDouble() * img.rows), 1, {0, 255, 0}, point_size);
+	cv::circle(img, cv::Point2f(keypoints["left_eye"]["proj"][0].getDouble() * img.cols, keypoints["left_eye"]["proj"][1].getDouble() * img.rows), 1, {0, 0, 255}, point_size);
+	cv::circle(img, cv::Point2f(keypoints["right_eye"]["proj"][0].getDouble() * img.cols, keypoints["right_eye"]["proj"][1].getDouble() * img.rows), 1, {0, 0, 255}, point_size);
+	cv::circle(img, cv::Point2f(keypoints["mouth"]["proj"][0].getDouble() * img.cols, keypoints["mouth"]["proj"][1].getDouble() * img.rows), 1, {0, 0, 255}, point_size);
 	if (output == "yes")
-		std::cout << "left eye(" << obj["left_eye"]["proj"][0].getDouble() * img.cols << ", " << obj["left_eye"]["proj"][1].getDouble() * img.rows << "), right eye(" << obj["right_eye"]["proj"][0].getDouble() * img.cols << ", " << obj["right_eye"]["proj"][1].getDouble() * img.rows << "), mouth(" << obj["mouth"]["proj"][0].getDouble() * img.cols << ", " << obj["mouth"]["proj"][1].getDouble() * img.rows << ")\n";
+		std::cout << "left eye(" << keypoints["left_eye"]["proj"][0].getDouble() * img.cols << ", " << keypoints["left_eye"]["proj"][1].getDouble() * img.rows << "), right eye(" << keypoints["right_eye"]["proj"][0].getDouble() * img.cols << ", " << keypoints["right_eye"]["proj"][1].getDouble() * img.rows << "), mouth(" << keypoints["mouth"]["proj"][0].getDouble() * img.cols << ", " << keypoints["mouth"]["proj"][1].getDouble() * img.rows << ")\n";
 }
 
 cv::Mat getCrop(const api::Context& obj, cv::Mat &image)
@@ -106,7 +107,7 @@ cv::Mat getCrop(const api::Context& obj, cv::Mat &image)
 	int height = static_cast<int>(rectCtx[3].getDouble() * img_h) - y;
 
 	cv::Rect rect(std::max(0, x - int(width * 0.25)), std::max(0, y - int(height * 0.25)),
-				  std::min(img_w - x, int(width * 1.5)), std::min(img_h - y, int(height * 1.5)));
+				  std::min(img_w, int(width * 1.5)), std::min(img_h, int(height * 1.5)));
 
 	return image(rect);
 }
@@ -146,7 +147,7 @@ void recognitionSample(std::string sdk_path, std::string input_image_path1, std:
 	Context matcherCtx = service.createContext();
 
 	detectorCtx["unit_type"] = "FACE_DETECTOR";
-	fitterCtx["unit_type"] = "MESH_FITTER";
+	fitterCtx["unit_type"] = "FITTER";
 	recognizerCtx["unit_type"] = "FACE_RECOGNIZER";
 	matcherCtx["unit_type"] = "MATCHER_MODULE";
 
@@ -267,7 +268,7 @@ void detectorFitterSample(std::string sdk_path, std::string input_image_path, st
 
 	if (mode == "landmarks"){
 		Context fitterCtx = service.createContext();
-		fitterCtx["unit_type"] = "MESH_FITTER";
+		fitterCtx["unit_type"] = "FITTER";
 
 		api::ProcessingBlock meshFitter = service.createProcessingBlock(fitterCtx);
 

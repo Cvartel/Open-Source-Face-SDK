@@ -3,9 +3,19 @@
 
 #include <tdv/data/Context.h>
 #include <tdv/modules/DetectionModules/FaceDetectionModule.h>
-#include <tdv/modules/MeshFitterModule.h>
+#include <tdv/modules/FitterModule.h>
 #include <tdv/modules/FaceIdentificationModule.h>
+#include <tdv/modules/BodyReidentificationModule.h>
 #include <tdv/modules/MatcherModule.h>
+#include <tdv/modules/AgeEstimationModule.h>
+#include <tdv/modules/EmotionsEstimationModule.h>
+#include <tdv/modules/EyeOpenessEstimationModule.h>
+#include <tdv/modules/GenderEstimationModule.h>
+#include <tdv/modules/GlassesEstimationModule.h>
+#include <tdv/modules/MaskEstimationModule.h>
+#include <tdv/modules/LivenessDetectionModule/LivenessDetectionModule.h>
+#include <tdv/modules/HpeResnetV1DModule.h>
+#include <tdv/modules/DetectionModules/BodyDetectionModule.h>
 #include <api/c_api.h>
 #include <tdv/utils/rassert/RAssert.h>
 
@@ -16,12 +26,31 @@
 	handle_ = new internal::x(new_ctx); \
 	return reinterpret_cast<HPBlock*>(handle_);
 
+#define CreatePBLiveness(x)\
+	if (!ctx.get<std::string>("model_scale2.7_path", "").compare("") && !ctx.get<std::string>("model_scale4.0_path", "").compare("") ) \
+	{ \
+		new_ctx["model_scale2.7_path"] = ctx["@sdk_path"].get<std::string>() + "/data/models/liveness_estimator/liveness_2_7.onnx"; \
+		new_ctx["model_scale4.0_path"] = ctx["@sdk_path"].get<std::string>() + "/data/models/liveness_estimator/liveness_4_0.onnx"; \
+	} \
+	handle_ = new internal::x(new_ctx); \
+	return reinterpret_cast<HPBlock*>(handle_);
+
 
 const std::map<std::string, std::string> unitTypes {
 	{"FACE_DETECTOR", "/data/models/face_detector/face.onnx"},
 	{"FACE_RECOGNIZER", "/data/models/recognizer/recognizer.onnx"},
-	{"MESH_FITTER", "/data/models/mesh_fitter/mesh_fitter.onnx"},
+	{"FITTER", "/data/models/mesh_fitter/mesh_fitter.onnx"},
+	{"AGE_ESTIMATOR", "/data/models/age_estimator/age_heavy.onnx"},
+	{"GENDER_ESTIMATOR", "/data/models/gender_estimator/gender_heavy.onnx"},
+	{"EMOTION_ESTIMATOR", "/data/models/emotion_estimator/emotion.onnx"},
+	{"GLASSES_ESTIMATOR", "/data/models/glasses_estimator/glasses_v2.onnx"},
+	{"MASK_ESTIMATOR", "/data/models/mask_estimator/mask.onnx"},
+	{"EYE_OPENNESS_ESTIMATOR", "/data/models/eye_openness_estimator/eye.onnx"},
 	{"MATCHER_MODULE", ""},
+	{"HUMAN_BODY_DETECTOR", "/data/models/body_detector/body.onnx"},
+	{"BODY_RE_IDENTIFICATION", "/data/models/body_reidentification/re_id_heavy_model.onnx"},
+	{"POSE_ESTIMATOR", "/data/models/top_down_hpe/hpe-td.onnx"},
+	{"POSE_ESTIMATOR_LABEL", "/data/models/top_down_hpe/label_map_keypoints.txt"},
 };
 
 namespace api {
@@ -351,7 +380,7 @@ TDV_PUBLIC bool TDVContext_isBool(HContext * ctx, ContextEH ** eh)
 TDV_PUBLIC bool TDVContext_isLong(HContext * ctx, ContextEH ** eh)
 {
 	try {
-		return reinterpret_cast<internal::Context*>(ctx)->is<long>();
+		return reinterpret_cast<internal::Context*>(ctx)->is<int64_t>();
 	} catch (std::exception& e ) {
 		if(!eh) throw;
 		*eh = new ContextEH(new internal::Error(0x96fac43c, e.what()),
@@ -511,12 +540,37 @@ TDV_PUBLIC HPBlock* TDVProcessingBlock_createProcessingBlock(const HContext * co
 			throw std::invalid_argument("not unit_type");
 		}else if ( unit_type == "FACE_DETECTOR"){
 			CreatePB(FaceDetectionModule);
-		}else if (unit_type == "MESH_FITTER"){
-			CreatePB(MeshFitterModule);
+		}else if (unit_type == "FITTER"){
+			CreatePB(FitterModule);
 		}else if(unit_type == "FACE_RECOGNIZER"){
 			CreatePB(FaceIdentificationModule);
 		}else if (unit_type == "MATCHER_MODULE"){
 			CreatePB(MatcherModule);
+		}else if(unit_type == "AGE_ESTIMATOR"){
+			CreatePB(AgeEstimationModule);
+		}else if(unit_type == "GENDER_ESTIMATOR"){
+			CreatePB(GenderEstimationModule);
+		}else if(unit_type == "EMOTION_ESTIMATOR"){
+			CreatePB(EmotionsEstimationModule);
+		}else if(unit_type == "GLASSES_ESTIMATOR"){
+			CreatePB(GlassesEstimationModule);
+		}else if(unit_type == "MASK_ESTIMATOR"){
+			CreatePB(MaskEstimationModule);
+		}else if(unit_type == "EYE_OPENNESS_ESTIMATOR"){
+			CreatePB(EyeOpenessEstimationModule);
+		}else if(unit_type == "LIVENESS_ESTIMATOR"){
+			CreatePBLiveness(LivenessDetectionModule);
+		}else if(unit_type == "HUMAN_BODY_DETECTOR"){
+			CreatePB(BodyDetectionModule);}
+		else if(unit_type == "BODY_RE_IDENTIFICATION"){
+			CreatePB(BodyReidentificationModule);
+		}else if (unit_type == "POSE_ESTIMATOR"){
+			if (!ctx.get<std::string>("model_path", "").compare(""))
+				new_ctx["model_path"] = ctx["@sdk_path"].get<std::string>() + unitTypes.at(ctx["unit_type"].get<std::string>());
+			if (!ctx.get<std::string>("model_path", "").compare(""))
+				new_ctx["label_map"] = ctx["@sdk_path"].get<std::string>() + unitTypes.at(ctx["unit_type"].get<std::string>() + "_LABEL");
+			handle_ = new internal::HpeResnetV1DModule(new_ctx);
+			return reinterpret_cast<HPBlock*>(handle_);
 		}else{
 			throw std::invalid_argument("not correct unit_type");
 		}

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.12)
 
 include(ExternalProject)
 
-set(PROJECT_NAME open-source-sdk)
+set(PROJECT_NAME open_source_sdk)
 project(${PROJECT_NAME})
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -13,6 +13,7 @@ set(WITH_SSE false CACHE BOOL "with or without SSE intrinsics")
 
 option(ONNXRT_OBSOLETE_API "use api for onnxruntime v1.4" ON)
 option(WITH_SAMPLES "build samples" OFF)
+option(WITH_JAVA "build java_api" OFF)
 
 add_definitions(-DNO_OPENCV)	# binary utils only
 
@@ -26,6 +27,10 @@ add_definitions(-D_POSIX_C_SOURCE)
 add_definitions(-D_7ZIP_ST)
 add_definitions(-D_Boost_USE_STATIC_LIBS=ON)
 add_definitions(-D_Boost_USE_STATIC_RUNTIME=ON)
+
+if(NOT UNIX)
+	set(CMAKE_SHARED_LIBRARY_PREFIX "")
+endif()
 
 if(NOT DEFINED TDV_OPENCV_DIR)
 	set(TDV_OPENCV_DIR ${CMAKE_SOURCE_DIR}/3rdparty/build/opencv)
@@ -70,16 +75,30 @@ set(SOURCES ${SOURCES}
 	src/tdv/modules/BaseEstimationModule.cpp
 	src/tdv/modules/ONNXRuntimeAdapter.cpp
 	src/tdv/modules/ONNXRuntimeEnvironment.cpp
-	src/tdv/modules/MeshFitterModule.cpp
+	src/tdv/modules/FitterModule.cpp
 	src/tdv/modules/FaceIdentificationModule.cpp
 	src/tdv/modules/MatcherModule.cpp
+	src/tdv/modules/AgeEstimationModule.cpp
+	src/tdv/modules/EmotionsEstimationModule.cpp
+	src/tdv/modules/GenderEstimationModule.cpp
+	src/tdv/modules/GlassesEstimationModule.cpp
+	src/tdv/modules/MaskEstimationModule.cpp
+	src/tdv/modules/EyeOpenessEstimationModule.cpp
+	src/tdv/modules/LivenessDetectionModule/LivenessBaseModule.cpp
+	src/tdv/modules/LivenessDetectionModule/LivenessDetectionModule.cpp
 	src/tdv/utils/recognizer_utils/RecognizerUtils.cpp
+	src/tdv/modules/DetectionModules/BodyDetectionModule.cpp
+	src/tdv/modules/BodyReidentificationModule.cpp
+	src/tdv/modules/HpeResnetV1DModule.cpp
+	src/tdv/utils/har_utils/har_utils.cpp
 	src/tdv/data/JSONSerializer.cpp
 	src/tdv/data/ContextUtils.cpp
 )
 
 if(CMAKE_GENERATOR MATCHES "Visual Studio")
 	set(LIB_LIBS ${LIB_LIBS} libpthreadVC3)
+
+	add_definitions(-DNOMINMAX)
 
 	if(BUILD_SHARED)
 	link_directories(${3RDPARTY_OPENCV_LIB_DIR})
@@ -89,6 +108,14 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
 		opencv_world310
 		-Wl,--no-whole-archive)
 	endif()
+elseif(PIP)
+set(LIB_LIBS
+	${LIB_LIBS}
+	-Wl,--whole-archive
+	-Wl,--no-whole-archive
+	opencv_imgcodecs
+	opencv_imgproc
+	opencv_core)
 else()
 	set(LIB_LIBS ${LIB_LIBS} pthread dl)
 
@@ -114,6 +141,9 @@ else()
 endif()
 
 add_subdirectory(3rdparty)
+if(WITH_JAVA)
+	add_subdirectory(src)
+endif()
 
 add_subdirectory(samples)
 
@@ -161,3 +191,11 @@ install(DIRECTORY include/ DESTINATION include)
 install(DIRECTORY data/ DESTINATION data)
 install(DIRECTORY src/python_api DESTINATION .)
 install(FILES samples/python/face_demo.py DESTINATION bin)
+install(FILES samples/python/estimator_demo.py DESTINATION bin)
+install(FILES samples/python/body_demo.py DESTINATION bin)
+
+if (CMAKE_GENERATOR MATCHES "Visual Studio")
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/install/3rdparty/lib/onnxruntime.dll DESTINATION python_api/face_sdk/for_windows/onnxruntime-windows-x86-64-shared-install-dir)
+	install(FILES ${CMAKE_INSTALL_PREFIX}/bin/open_source_sdk.dll DESTINATION python_api/face_sdk/for_windows/open_source_sdk)
+	install(FILES ${CMAKE_INSTALL_PREFIX}/bin/opencv_world310.dll DESTINATION python_api/face_sdk/for_windows/open_source_sdk)
+endif()

@@ -661,47 +661,59 @@ public:
 	inline typename std::enable_if<std::is_unsigned<T>::value && !std::is_same<T, bool>::value, T>::type
 	get_as() const // unsigned integer conversion
 	{
-		return static_cast<T>(retype_as<
-							unsigned long long, unsigned long,  unsigned int, unsigned short, unsigned char,
-							long long, long, int, short, char,
-							double, float>());
+		using enum_types = enumeration_types<
+			unsigned long long, unsigned long, unsigned int, unsigned short, unsigned char,
+			long long, long, int, short, char,
+			double, float>;
+
+		// this won't const anything with -O2 ------------------------- vv //
+		return static_cast<T>(retype_as<enum_types::max_type>(enum_types{}));
 	}
 
 	template<class T>
 	inline typename std::enable_if<std::is_signed<T>::value && std::is_integral<T>::value, T>::type
 	get_as() const // signed integer conversion
 	{
-		return static_cast<T>(retype_as<
-				long long, long, int, short, char,
-				unsigned long long, unsigned long,  unsigned int, unsigned short, unsigned char,
-				double,  float>());
+		using enum_types = enumeration_types<
+		    long long, long, int, short, char,
+			unsigned long long, unsigned long,  unsigned int, unsigned short, unsigned char,
+			double,  float>;
+
+		// this won't const anything with -O2 ------------------------- vv //
+		return static_cast<T>(retype_as<enum_types::max_type>(enum_types{}));
 	}
 
 	template<class T>
 	inline typename std::enable_if<std::is_signed<T>::value && !std::is_integral<T>::value, T>::type
 	get_as() const
 	{
-		return static_cast<T>(retype_as<
-				double, 		 float,
-							unsigned long long, 	 long long,
-							unsigned long, 	 long,
-							unsigned int, int,
-							unsigned short, short,
-							unsigned char, char>());
+		using enum_types = enumeration_types<
+			double, float,
+			unsigned long long, long long,
+			unsigned long, 	 long,
+			unsigned int, int,
+			unsigned short, short,
+			unsigned char, char>;
+
+		// this won't const anything with -O2 ------------------------- vv //
+		return static_cast<T>(retype_as<enum_types::max_type>(enum_types{}));
 	}
 
 	template<class T>
 	inline typename std::enable_if<std::is_same<T, bool>::value, T>::type
 	get_as() const // convert to boolean
 	{
-		return static_cast<T>(retype_as<
-							bool,
-							unsigned long long, 	 long long,
-							unsigned long, 	 long,
-							unsigned int, int,
-							unsigned short, short,
-							unsigned char, char,
-							double, 		  float>());
+		using enum_types = enumeration_types<
+			bool,
+			unsigned long long, long long,
+			unsigned long, 	 long,
+			unsigned int, int,
+			unsigned short, short,
+			unsigned char, char,
+			double, float>;
+
+		// this won't const anything with -O2 ------------------------- vv //
+		return static_cast<T>(retype_as<enum_types::max_type>(enum_types{}));
 	}
 
 	template<class T>
@@ -798,24 +810,21 @@ public:
 
 private:
 
-	template <class Target_type, class... Types>
-	inline typename enumeration_types<Target_type, Types...>::max_type
-	retype_as(const typename std::enable_if<!(std::is_same<void, typename enumeration_types<Types...>::max_type>::value), void*>::type = nullptr) const
+	template <class Max_type, class Head_type, class... Tail_types>
+	inline typename std::enable_if<(sizeof...(Tail_types) > 0), Max_type>::type
+		retype_as(enumeration_types<Head_type, Tail_types...> ) const
 	{
-		using retype = typename enumeration_types<Target_type, Types...>::max_type;
-
-		return is<Target_type>() ?
-					static_cast<retype>(get<Target_type>()) :
-					retype_as<Types...>();
+		return is<Head_type>() ?
+			static_cast<Max_type>(get<Head_type>()) :
+			// this won't const anything with -O2 ---------------------------- vv //
+			retype_as<Max_type, Tail_types...>(enumeration_types<Tail_types...>{});
 	}
 
-	template <class Target_type, class... Types>
-	inline typename enumeration_types<Target_type, Types...>::max_type
-	retype_as(const typename std::enable_if<(std::is_same<void, typename enumeration_types<Types...>::max_type>::value), void*>::type = nullptr) const
+	template <class Max_type, class Head_type>
+	inline Max_type	retype_as(enumeration_types<Head_type>) const
 	{
-		using retype = typename enumeration_types<Target_type, Types...>::max_type;
-		if(is<Target_type>())
-			return static_cast<retype>(get<Target_type>());
+		if(is<Head_type>())
+			return static_cast<Max_type>(get<Head_type>());
 		throw std::runtime_error("(retype_as): Bad conversion error!");
 	}
 

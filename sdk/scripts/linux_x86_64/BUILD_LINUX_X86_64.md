@@ -2,6 +2,7 @@
 ## Prerequisites 
 * GCC **4.8 or higher**;
 * CMake **2.8 or higher**;
+* libgtk **2.0-dev or higher**
 ## x86-64
 
 For a standard SDK build, use the build_sdk.sh script. This script will automatically find and install all the necessary dependencies and build the project. To run, use the following command:
