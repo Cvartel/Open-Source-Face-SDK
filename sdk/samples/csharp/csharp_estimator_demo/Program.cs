@@ -269,7 +269,7 @@ namespace ApiTest
             EstimatorRealisation("FACE_DETECTOR", data, service);
             if (mode == "eye_openness" || mode == "all")
             {
-                EstimatorRealisation("MESH_FITTER", data, service);
+                EstimatorRealisation("FITTER", data, service);
                 if (mode == "all")
                 {
                     foreach (var value in allModes)

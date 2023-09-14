@@ -34,5 +34,5 @@ dotnet add package CommandLineParser
 
 dotnet publish --configuration Release --output bin/publish /p:AllowUnsafeBlocks=true
 cd ..
-cp -r ../../csharp_face_demo/bin/publish/* ./make-install/bin
+cp -r csharp_face_demo/bin/publish/* ./make-install/bin
 ```

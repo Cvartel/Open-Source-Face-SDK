@@ -29,19 +29,23 @@ bone_map = [
     ("left_ankle", "left_knee")
 ]
 
+
 def help_message():
-    message = f"usage: {sys.argv[0]} [--mode detection | pose| reidentigication] " \
+    message = f"usage: {sys.argv[0]} [--mode detection | pose| reidentification] " \
               " [--input_image <path to image>]" \
               " [--sdk_path ..]" \
               " [--output <yes/no>]"
     print(message)
 
+
 def draw_bbox(obj, img, output, color=(0, 255, 0)):
     rect = obj["bbox"]
     if output == "yes":
-        print(f"BBox coordinates: {int(rect[0].get_value() * img.shape[1])}, {int(rect[1].get_value() * img.shape[0])}, {(int(rect[2].get_value() * img.shape[1]))}, {int(rect[3].get_value() * img.shape[0])}")
+        print(
+            f"BBox coordinates: {int(rect[0].get_value() * img.shape[1])}, {int(rect[1].get_value() * img.shape[0])}, {(int(rect[2].get_value() * img.shape[1]))}, {int(rect[3].get_value() * img.shape[0])}")
     return cv2.rectangle(img, (int(rect[0].get_value() * img.shape[1]), int(rect[1].get_value() * img.shape[0])),
                          (int(rect[2].get_value() * img.shape[1]), int(rect[3].get_value() * img.shape[0])), color, 1)
+
 
 def detector_demo(sdk_path, img_path, mode, output):
     service = Service.create_service(sdk_path)
@@ -54,7 +58,8 @@ def detector_demo(sdk_path, img_path, mode, output):
     input_image: np.ndarray = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     height, width, _ = input_image.shape
 
-    imgCtx = {"blob": input_image.tobytes(), "dtype": "uint8_t", "format": "NDARRAY","shape": [dim for dim in input_image.shape]}
+    imgCtx = {"blob": input_image.tobytes(), "dtype": "uint8_t", "format": "NDARRAY",
+              "shape": [dim for dim in input_image.shape]}
     ioData = service.create_context({"image": imgCtx})
 
     body_detector(ioData)
@@ -62,10 +67,10 @@ def detector_demo(sdk_path, img_path, mode, output):
         pose_estimator = service.create_processing_block({"unit_type": "POSE_ESTIMATOR"})
         pose_estimator(ioData)
 
-    elif mode == "reidentigication":
-        reidentigication_detector = service.create_processing_block({"unit_type": "BODY_RE_IDENTIFICATION"})
-        reidentigication_detector(ioData)
-    color = (0,255,0)
+    elif mode == "reidentification":
+        reidentification_detector = service.create_processing_block({"unit_type": "BODY_RE_IDENTIFICATION"})
+        reidentification_detector(ioData)
+    color = (0, 255, 0)
     tink = 1
 
     for obj in ioData["objects"]:
@@ -80,17 +85,37 @@ def detector_demo(sdk_path, img_path, mode, output):
                 x2 = int(posesCtx[key2]["proj"][0].get_value() * img.shape[1])
                 y2 = int(posesCtx[key2]["proj"][1].get_value() * img.shape[0])
                 if output == "yes":
-                    print("Pose: x1:",x1," y1:",y1," x2:",x2," y2:",y2)
-                cv2.line(img,(x1,y1),(x2,y2),color,tink)
+                    print("Pose: x1:", x1, " y1:", y1, " x2:", x2, " y2:", y2)
+                cv2.line(img, (x1, y1), (x2, y2), color, tink)
 
             for i in posesCtx.keys():
-                x = int(posesCtx[i]["proj"][0].get_value()* img.shape[1])
-                y = int(posesCtx[i]["proj"][1].get_value()* img.shape[0])
-                cv2.circle(img,(x,y),3,(0,0,255),-1,0)
+                x = int(posesCtx[i]["proj"][0].get_value() * img.shape[1])
+                y = int(posesCtx[i]["proj"][1].get_value() * img.shape[0])
+                cv2.circle(img, (x, y), 3, (0, 0, 255), -1, 0)
+
+    if mode == "reidentification":
+        output_data = ioData["output_data"]
+        template_data = output_data["template"]
+        template_size = int(output_data["template_size"].get_value())
+        template_name = os.path.splitext(os.path.basename(img_path))[0] + ".txt"
+
+        with open(template_name, "w") as template_file:
+            template_file.write(str(template_size))
+            template_file.write('\n')
+
+            for i in range(template_size):
+                template_file.write(str(template_data[i].get_value()))
+
+                if i + 1 != template_size:
+                    template_file.write(' ')
+
+        if output:
+            print(f"Template saved in {template_name} file")
 
     cv2.imshow("result", img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Video Recognition Demo')
@@ -108,7 +133,7 @@ if __name__ == "__main__":
 
     args = parse_args()
 
-    if args.mode == "detection" or args.mode == "pose" or args.mode == "reidentigication":
-        detector_demo(args.sdk_path, args.input_image, args.mode , args.output)
+    if args.mode == "detection" or args.mode == "pose" or args.mode == "reidentification":
+        detector_demo(args.sdk_path, args.input_image, args.mode, args.output)
     else:
         print("Incorrect mode")

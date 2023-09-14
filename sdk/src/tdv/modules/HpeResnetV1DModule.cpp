@@ -25,7 +25,7 @@ cv::Mat imageToBlob(cv::Mat& image, int nchannel = 3, const int ddepth=CV_32F) {
 
 	output.create(4, sz, ddepth);
 
-	cv::Mat ch[nch];
+	std::vector<cv::Mat> ch(nch);
 	for( int j = 0; j < nchannel; j++ )
 		ch[j] = cv::Mat(image.rows, image.cols, ddepth, output.ptr(0,j));
 

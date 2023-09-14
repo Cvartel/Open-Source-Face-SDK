@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Security.Cryptography;
 using System.Xml.Linq;
+using System.IO;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace ApiTest
@@ -19,7 +20,7 @@ namespace ApiTest
         static void HelpMessage()
         {
             string message = $"usage: {AppDomain.CurrentDomain.FriendlyName}.exe " +
-             $"[--mode detection | pose | reidentigication] \r\n" +
+             $"[--mode detection | pose | reidentification] \r\n" +
               " [--input_image <path to image>] \r\n" +
               " [--sdk_path ..] \r\n" +
               " [--output <yes/no>] \r\n";
@@ -114,7 +115,7 @@ namespace ApiTest
             MatToBsm(ref imgCtx, input_image);
             Context ioData = service.CreateContext(new Dictionary<object, object> { { "image", imgCtx } });
             bodyDetector.Invoke(ioData);
-            if (mode == "reidentigication")
+            if (mode == "reidentification")
             {
                 Dictionary<object, object> bodyReidCtx = new Dictionary<object, object>();
                 bodyReidCtx["unit_type"] = "BODY_RE_IDENTIFICATION";
@@ -172,22 +173,40 @@ namespace ApiTest
                         int x2 = (int)(posesCtx[key2]["proj"][0].GetDouble() * image.Height);
                         int y2 = (int)(posesCtx[key2]["proj"][1].GetDouble() * image.Width);
                         if (output == "yes")
-                            Console.WriteLine("Pose: x1:", x1, " y1:", y1, " x2:", x2, " y2:", y2);
+                            Console.WriteLine($"Pose: x1: {x1}, y1: {y1}, x2: {x2}, y2: {y2}");
                         Cv2.Line(image, new Point(x1, y1), new Point(x2, y2), color, thickness);
-                    }
-                    foreach (var item in posesCtx.Keys())
-                    {
-                        int x = (int)(posesCtx[i]["proj"][0].GetDouble() * image.Height);
-                        int y = (int)(posesCtx[i]["proj"][1].GetDouble() * image.Width);
-                        Cv2.Circle(image, new Point(x, y), 3, new Scalar(0, 0, 255), -1, 0);
 
+                        Cv2.Circle(image, new Point(x1, y1), 3, new Scalar(0, 0, 255), -1, 0);
+                        Cv2.Circle(image, new Point(x2, y2), 3, new Scalar(0, 0, 255), -1, 0);
                     }
                 }
-
             }
+
+            if (mode == "reidentification")
+            {
+                Context outputData = ioData["output_data"];
+                Context templateData = outputData["template"];
+                ulong templateSize = outputData["template_size"].GetUnsignedLong();
+                string resultFileName = Path.GetFileNameWithoutExtension(inputImagePath) + ".txt";
+
+                using (StreamWriter templateFile = new StreamWriter(resultFileName))
+                {
+                    templateFile.WriteLine(templateSize);
+
+                    for (ulong i = 0; i < templateSize; i++)
+                    {
+                        templateFile.Write(templateData[(int)i].GetDouble());
+
+                        if (i + 1 != templateSize)
+                        {
+                            templateFile.Write(' ');
+                        }
+                    }
+                }
+            }
+
             Cv2.ImShow("image", image);
             Cv2.WaitKey();
-
         }
 
 
@@ -196,7 +215,7 @@ namespace ApiTest
             HelpMessage();
             ParseArguments(args);
             CheckFileExist(inputImagePath);
-            if (mode == "detection" || mode == "reidentigication" || mode == "pose")
+            if (mode == "detection" || mode == "reidentification" || mode == "pose")
             {
                 DemoBody();
             }

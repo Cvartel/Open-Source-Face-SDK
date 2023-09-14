@@ -139,6 +139,14 @@ class Context(ComplexObject):
         check_exception(exception, self._dll_handle)
         return value
 
+    def __getUnsignedLong(self):
+        exception = make_exception()
+
+        value = self._dll_handle.getUnsignedLong(self._impl, exception)
+
+        check_exception(exception, self._dll_handle)
+        return value
+
     def __getLength(self):
         exception = make_exception()
 
@@ -290,6 +298,14 @@ class Context(ComplexObject):
         check_exception(exception, self._dll_handle)
         return value
 
+    def is_unsigned_long(self) -> bool:
+        exception = make_exception()
+
+        value = self._dll_handle.isUnsignedLong(self._impl, exception)
+
+        check_exception(exception, self._dll_handle)
+        return value
+
     def is_double(self) -> bool:
         exception = make_exception()
 
@@ -323,6 +339,8 @@ class Context(ComplexObject):
             return self.__getStr()
         if self.is_long():
             return self.__getLong()
+        if self.is_unsigned_long():
+            return self.__getUnsignedLong()
         if self.is_double():
             return self.__getDouble()
         if self.is_data_ptr():

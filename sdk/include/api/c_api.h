@@ -46,6 +46,7 @@ TDV_PUBLIC bool TDVContext_isObject(HContext * ctx, ContextEH ** eh);
 
 TDV_PUBLIC bool TDVContext_isBool(HContext * ctx, ContextEH ** eh);
 TDV_PUBLIC bool TDVContext_isLong(HContext * ctx, ContextEH ** eh);
+TDV_PUBLIC bool TDVContext_isUnsignedLong(HContext * ctx, ContextEH ** eh);
 TDV_PUBLIC bool TDVContext_isDouble(HContext * ctx, ContextEH ** eh);
 TDV_PUBLIC bool TDVContext_isString(HContext * ctx, ContextEH ** eh);
 TDV_PUBLIC bool TDVContext_isDataPtr(HContext * ctx, ContextEH ** eh);
@@ -54,6 +55,7 @@ TDV_PUBLIC const char* TDVContext_getStr(HContext * ctx, char* buff, ContextEH *
 TDV_PUBLIC uint64_t TDVContext_getStrSize(HContext * ctx, ContextEH ** eh);
 TDV_PUBLIC void TDVContext_freePtr(void* ptr);
 TDV_PUBLIC int64_t TDVContext_getLong(HContext * ctx, ContextEH ** eh);
+TDV_PUBLIC uint64_t TDVContext_getUnsignedLong(HContext * ctx, ContextEH ** eh);
 TDV_PUBLIC double TDVContext_getDouble(HContext * ctx, ContextEH ** eh);
 TDV_PUBLIC bool TDVContext_getBool(HContext * ctx, ContextEH ** eh);
 TDV_PUBLIC unsigned char* TDVContext_getDataPtr(HContext * ctx, ContextEH ** eh);

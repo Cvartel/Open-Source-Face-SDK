@@ -175,6 +175,7 @@ public:
 
 	bool getBool() const;
 	int64_t getLong() const;
+	uint64_t getUnsignedLong() const;
 	double getDouble() const;
 	std::string getString() const;
 	unsigned char* getDataPtr() const;
@@ -188,6 +189,7 @@ public:
 
 	bool isBool() const;
 	bool isLong() const;
+	bool isUnsignedLong() const;
 	bool isDouble() const;
 	bool isString() const;
 	bool isDataPtr() const;
@@ -590,6 +592,12 @@ inline int64_t Context::getLong() const {
 	return ret;
 }
 
+inline uint64_t Context::getUnsignedLong() const {
+	uint64_t ret = TDVContext_getUnsignedLong(handle_, &eh_);
+	checkException(eh_);
+	return ret;
+}
+
 inline bool Context::getBool() const {
 	bool ret = TDVContext_getBool(handle_, &eh_);
 	checkException(eh_);
@@ -655,6 +663,12 @@ inline bool Context::isBool() const {
 
 inline bool Context::isLong() const {
 	bool val = TDVContext_isLong(handle_, &eh_);
+	checkException(eh_);
+	return val;
+}
+
+inline bool Context::isUnsignedLong() const {
+	bool val = TDVContext_isUnsignedLong(handle_, &eh_);
 	checkException(eh_);
 	return val;
 }

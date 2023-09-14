@@ -19,9 +19,9 @@ __UNIT_TYPES = {
     "EYE_OPENNESS_ESTIMATOR": ["data/models/eye_openness_estimator/eye.onnx"],
     "LIVENESS_ESTIMATOR": ["data/models/liveness_estimator/liveness_2_7.onnx",
                            "data/models/liveness_estimator/liveness_4_0.onnx"],
-    "BODY_RE_IDENTIFICATION": ["/data/models/body_reidentification/re_id_heavy_model.enc"],
-	"POSE_ESTIMATOR": ["/data/models/top_down_hpe/hpe-td.enc"],
-	"POSE_ESTIMATOR_LABEL": ["/data/models/top_down_hpe/label_map_keypoints.txt"],
+    "BODY_RE_IDENTIFICATION": ["data/models/body_reidentification/re_id_heavy_model.onnx"],
+    "POSE_ESTIMATOR": ["data/models/top_down_hpe/hpe-td.onnx"],
+    "POSE_ESTIMATOR_LABEL": ["data/models/top_down_hpe/label_map_keypoints.txt"],
 }
 
 __BASE_URL = "https://download.cvartel.com/facesdk/archives/artifacts/models/"

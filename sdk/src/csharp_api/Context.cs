@@ -264,6 +264,17 @@ namespace CSharpApi
             return value;
         }
         [DllImport("open_source_sdk.dll")]
+        unsafe private static extern ulong TDVContext_getUnsignedLong(void* ctx, ref void* eh);
+        unsafe public ulong GetUnsignedLong()
+        {
+            void* exception = ErrorMethods.MakeException();
+
+            ulong value = TDVContext_getUnsignedLong(_impl, ref exception);
+
+            ErrorMethods.CheckException(exception);
+            return value;
+        }
+        [DllImport("open_source_sdk.dll")]
         unsafe private static extern ulong TDVContext_getLength(void* ctx, ref void* eh);
         unsafe public ulong GetLength()
         {
@@ -456,6 +467,8 @@ namespace CSharpApi
         [DllImport("open_source_sdk.dll")]
         unsafe private static extern bool TDVContext_isLong(void* ctx, ref void* eh);
         [DllImport("open_source_sdk.dll")]
+        unsafe private static extern bool TDVContext_isUnsignedLong(void* ctx, ref void* eh);
+        [DllImport("open_source_sdk.dll")]
         unsafe private static extern bool TDVContext_isDouble(void* ctx, ref void* eh);
         [DllImport("open_source_sdk.dll")]
         unsafe private static extern bool TDVContext_isString(void* ctx, ref void* eh);
@@ -501,6 +514,14 @@ namespace CSharpApi
             ErrorMethods.CheckException(exception);
             return value;
         }
+        unsafe public bool IsUnsignedLong()
+        {
+            void* exception = ErrorMethods.MakeException();
+            bool value = TDVContext_isUnsignedLong(_impl, ref exception);
+
+            ErrorMethods.CheckException(exception);
+            return value;
+        }
         unsafe public bool IsDouble()
         {
             void* exception = ErrorMethods.MakeException();
@@ -535,6 +556,8 @@ namespace CSharpApi
                 return GetStr();
             if (IsLong())
                 return GetLong();
+            if (IsUnsignedLong())
+                return GetUnsignedLong();
             if (IsDouble())
                 return GetDouble();
             if (IsDataPtr())

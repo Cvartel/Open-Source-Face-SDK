@@ -44,22 +44,24 @@ namespace ApiTest
             else
                 throw new FileNotFoundException($"File {path} not found");
         }
+        static int Clip(int n, int lower, int upper) {
+	        return Math.Max(lower, Math.Min(n, upper));
+        }
         static Mat GetCrop(Context obj, Mat image) 
         {
-            int img_w = image.Width;
-            int img_h = image.Height;
-
             Context rectCtx = obj["bbox"];
-            int x = (int)(rectCtx[0].GetDouble() * img_w);
-            int y = (int)(rectCtx[1].GetDouble() * img_h);
-            int width = (int)(rectCtx[2].GetDouble() * img_w) - x;
-            int height = (int)(rectCtx[3].GetDouble() * img_h) - y;
+            int x = (int)(rectCtx[0].GetDouble() * image.Width);
+            int y = (int)(rectCtx[1].GetDouble() * image.Height);
+            int width = (int)(rectCtx[2].GetDouble() * image.Width) - x;
+            int height = (int)(rectCtx[3].GetDouble() * image.Height) - y;
 
-            Rect rect = new Rect(Math.Max(0, x - (int)(width * 0.25)), Math.Max(0, y - (int)(height * 0.25)),
-                                 Math.Min(img_w, (int)(width * 1.5)), Math.Min(img_h, (int)(height * 1.5)));
+            Point bboxTopLeft = new Point(Clip(x, 0, image.Width), Clip(y, 0 , image.Height));
+	        Size size = new Size(Clip(width, 0, image.Width - x), Clip(height, 0, image.Height - y));
+            Rect rect = new Rect(bboxTopLeft, size);
+            
             return image[rect];
         }
-        static Context GetObjectWithMaxConfidence(Context data)
+        static void GetObjectWithMaxConfidence(Context data, ref Context result)
         {
             double max_confidence = 0;
             int index_max_confidence = 0;
@@ -73,7 +75,8 @@ namespace ApiTest
                     index_max_confidence = i;
                 }
             }
-            return data["objects"][index_max_confidence];
+
+            result["objects"].PushBack(data["objects"][index_max_confidence]);
         }
         static void DrawBBox(Context obj, Mat img, string output, Scalar color) 
         {
@@ -97,22 +100,24 @@ namespace ApiTest
 
             int point_size = width * height > 320 * 480 ? 3 : 1;
 
-            var fitter = obj["fitter"];
+            var keypoints = obj["keypoints"];
+            var points = keypoints["points"];
 
-
-            for (ulong i = 0; i < fitter["keypoints"].GetLength(); i++)
+            for (ulong i = 0; i < points.GetLength(); i++)
             {
-                Cv2.Circle(img, new Point(fitter["keypoints"][(int)i][0].GetDouble() * img.Cols, fitter["keypoints"][(int)i][1].GetDouble() * img.Rows), 1, new Scalar(0, 255, 0), point_size);
+                var point = points[(int)i];
+
+                Cv2.Circle(img, new Point(point["x"].GetDouble() * img.Cols, point["y"].GetDouble() * img.Rows), 1, new Scalar(0, 255, 0), point_size);
             }
             
-            Cv2.Circle(img, new Point(fitter["left_eye"][0].GetDouble() * img.Cols, fitter["left_eye"][1].GetDouble() * img.Rows), 1, new Scalar( 0, 0, 255), point_size);
-            Cv2.Circle(img, new Point(fitter["right_eye"][0].GetDouble() * img.Cols, fitter["right_eye"][1].GetDouble() * img.Rows), 1, new Scalar( 0, 0, 255), point_size);
-            Cv2.Circle(img, new Point(fitter["mouth"][0].GetDouble() * img.Cols, fitter["mouth"][1].GetDouble() * img.Rows), 1, new Scalar( 0, 0, 255), point_size);
+            Cv2.Circle(img, new Point(keypoints["left_eye"]["proj"][0].GetDouble() * img.Cols, keypoints["left_eye"]["proj"][1].GetDouble() * img.Rows), 1, new Scalar( 0, 0, 255), point_size);
+            Cv2.Circle(img, new Point(keypoints["right_eye"]["proj"][0].GetDouble() * img.Cols, keypoints["right_eye"]["proj"][1].GetDouble() * img.Rows), 1, new Scalar( 0, 0, 255), point_size);
+            Cv2.Circle(img, new Point(keypoints["mouth"]["proj"][0].GetDouble() * img.Cols, keypoints["mouth"]["proj"][1].GetDouble() * img.Rows), 1, new Scalar( 0, 0, 255), point_size);
             if (output == "yes")
             {
-                Console.WriteLine($"left eye({fitter["left_eye"][0].GetDouble() * img.Cols:0.000}, {fitter["left_eye"][1].GetDouble() * img.Rows:0.000}), " +
-                                $"right eye({fitter["right_eye"][0].GetDouble() * img.Cols:0.000}, {fitter["right_eye"][1].GetDouble() * img.Rows:0.000}), " +
-                                    $"mouth({fitter["mouth"][0].GetDouble() * img.Cols:0.000}, {fitter["mouth"][1].GetDouble() * img.Rows:0.000})\r\n");
+                Console.WriteLine($"left eye({keypoints["left_eye"]["proj"][0].GetDouble() * img.Cols:0.000}, {keypoints["left_eye"]["proj"][1].GetDouble() * img.Rows:0.000}), " +
+                                $"right eye({keypoints["right_eye"]["proj"][0].GetDouble() * img.Cols:0.000}, {keypoints["right_eye"]["proj"][1].GetDouble() * img.Rows:0.000}), " +
+                                    $"mouth({keypoints["mouth"]["proj"][0].GetDouble() * img.Cols:0.000}, {keypoints["mouth"]["proj"][1].GetDouble() * img.Rows:0.000})\r\n");
             }
         }
         public static void MatToBsm(ref Dictionary<object, object> bsmCtx, Mat img, bool copy = false)
@@ -169,7 +174,7 @@ namespace ApiTest
             Service service = Service.CreateService(sdkpath);
             CheckFileExist(image1path);
             ProcessingBlock face_detector = service.CreateProcessingBlock(new Dictionary<object, object> { { "unit_type", "FACE_DETECTOR" } });
-            ProcessingBlock mesh_fitter = service.CreateProcessingBlock(new Dictionary<object, object> { { "unit_type", "MESH_FITTER" } });
+            ProcessingBlock mesh_fitter = service.CreateProcessingBlock(new Dictionary<object, object> { { "unit_type", "FITTER" } });
 
             Mat image = Cv2.ImRead(image1path, ImreadModes.Color);
             Mat input_image = new Mat();
@@ -180,10 +185,8 @@ namespace ApiTest
             Context iodata = service.CreateContext(new Dictionary<object, object> { { "image", imgCtx } });
             face_detector.Invoke(iodata);
 
-            for (ulong i = 0; i < iodata["objects"].GetLength(); i++)
-            {
-                mesh_fitter.Invoke(iodata["objects"][(int)i]);
-            }
+            mesh_fitter.Invoke(iodata);
+
             for (ulong i = 0; i < iodata["objects"].GetLength(); i++)
             {
                 DrawBBox(iodata["objects"][(int)i], image, output, new Scalar(0, 255, 0));
@@ -202,7 +205,7 @@ namespace ApiTest
             CheckFileExist(image1path);
             CheckFileExist(image2path);
             ProcessingBlock face_detector = service.CreateProcessingBlock(new Dictionary<object, object> { { "unit_type", "FACE_DETECTOR" } });
-            ProcessingBlock mesh_fitter = service.CreateProcessingBlock(new Dictionary<object, object> { { "unit_type", "MESH_FITTER" } });
+            ProcessingBlock mesh_fitter = service.CreateProcessingBlock(new Dictionary<object, object> { { "unit_type", "FITTER" } });
             ProcessingBlock recognizer = service.CreateProcessingBlock(new Dictionary<object, object> { { "unit_type", "FACE_RECOGNIZER" } });
             ProcessingBlock matcher = service.CreateProcessingBlock(new Dictionary<object, object> { { "unit_type", "MATCHER_MODULE" } });
 
@@ -218,7 +221,9 @@ namespace ApiTest
             {
                 throw new Exception($"no face detected on {image1path}");
             }
-            Context obj1 = GetObjectWithMaxConfidence(iodata_1);
+            Context obj1 = service.CreateContext(new Dictionary<object, object> { { "objects", new List<object>() }, { "image", imgCtx_1 } });
+            
+            GetObjectWithMaxConfidence(iodata_1, ref obj1);
 
             Mat image_2 = Cv2.ImRead(image2path, ImreadModes.Color);
             Mat input_image_2 = new Mat();
@@ -232,7 +237,10 @@ namespace ApiTest
             {
                 throw new Exception($"no face detected on {image2path}");
             }
-            Context obj2 = GetObjectWithMaxConfidence(iodata_2);
+            Context obj2 = service.CreateContext(new Dictionary<object, object> { { "objects", new List<object>() }, { "image", imgCtx_2 } });
+            
+            GetObjectWithMaxConfidence(iodata_2, ref obj2);
+
             mesh_fitter.Invoke(obj1);
             recognizer.Invoke(obj1);
 
@@ -250,6 +258,10 @@ namespace ApiTest
                     }
                 }
             });
+            
+            obj1 = obj1["objects"][0];
+            obj2 = obj2["objects"][0];
+
             matcherData["verification"]["objects"].PushBack(obj1);
             matcherData["verification"]["objects"].PushBack(obj2);
 
@@ -260,7 +272,6 @@ namespace ApiTest
             Scalar color = verdict ? new Scalar(0, 255, 0) : new Scalar(0, 0, 255); 
             DrawBBox(obj1, image_1, output, color);
             DrawBBox(obj2, image_2, output, color);
-
             Mat crop1 = GetCrop(obj1, image_1);
             Mat crop2 = GetCrop(obj2, image_2);
 

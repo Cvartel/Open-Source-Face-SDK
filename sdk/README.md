@@ -56,7 +56,7 @@ To build Java bindings you should add _-DWITH_JAVA=ON -DJAVA_HOME="/usr/lib/jvm/
 mkdir bin 
 javac -sourcepath ../../src/java_api/src/ -d bin com/face_detector_demo/face_detector_demo.java 
 
-LD_LIBRARY_PATH=../../build/make-install/lib java --classpath ./bin com.face_detector_demo.face_detector_demo  path_to_image ../../build/make-install/
+LD_LIBRARY_PATH=../../build/make-install/lib java -classpath ./bin com.face_detector_demo.face_detector_demo  path_to_image ../../build/make-install/
 ```
 ### C# API
 Instructions are available for the following platforms:

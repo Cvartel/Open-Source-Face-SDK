@@ -100,6 +100,11 @@ class DllHandle:
         func.restype = c_long
         return func(*args, **kwargs)
 
+    def getUnsignedLong(self, *args, **kwargs):
+        func = self.__dll_handle['{}getUnsignedLong'.format(self.__contextNamespace)]
+        func.restype = c_ulong
+        return func(*args, **kwargs)
+
     def getBool(self, *args, **kwargs):
         func = self.__dll_handle['{}getBool'.format(self.__contextNamespace)]
         func.restype = c_bool
@@ -148,6 +153,11 @@ class DllHandle:
 
     def isLong(self, *args, **kwargs):
         func = self.__dll_handle['{}isLong'.format(self.__contextNamespace)]
+        func.restype = c_bool
+        return func(*args, **kwargs)
+
+    def isUnsignedLong(self, *args, **kwargs):
+        func = self.__dll_handle['{}isUnsignedLong'.format(self.__contextNamespace)]
         func.restype = c_bool
         return func(*args, **kwargs)
 

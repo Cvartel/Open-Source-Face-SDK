@@ -58,6 +58,7 @@ int main(int argc, char** argv)
 		const std::string inputImagePath = parser.get<std::string>("--input_image");
 		const std::string sdkPath = parser.get<std::string>("--sdk_path", "..");
 		const std::string window = parser.get<std::string>("--window", "yes");
+		const std::string output = parser.get<std::string>("--output", "yes");
 		std::ostringstream stream;
 
 		if (std::find(allModes.begin(), allModes.end(), mode) == allModes.end())
@@ -67,9 +68,13 @@ int main(int argc, char** argv)
 
 		checkFileExist(inputImagePath);
 
-		if (parser.get<std::string>("--output", "yes") == "no")
+		if (output == "no")
 		{
 			std::cout.rdbuf(stream.rdbuf());
+		}
+		else if (output != "yes")
+		{
+			throw std::runtime_error("Wrong output type");
 		}
 
 		detectorFitterSample(sdkPath, inputImagePath, mode, window);

@@ -15,6 +15,11 @@ using Context = api::Context;
 
 #include "ConsoleArgumentsParser.h"
 
+template <typename T>
+T clip(const T& n, const T& lower, const T& upper) {
+	return std::max(lower, std::min(n, upper));
+}
+
 void recognitionSample(std::string sdk_path, std::string input_image_path1, std::string input_image_path2, std::string window, std::string output);
 
 void detectorFitterSample(std::string sdk_path, std::string input_image_path, std::string mode, std::string window, std::string output);
@@ -97,19 +102,16 @@ void drawPoints(const api::Context& obj, cv::Mat& img, std::string output){
 
 cv::Mat getCrop(const api::Context& obj, cv::Mat &image)
 {
-	int img_w = image.cols;
-	int img_h = image.rows;
-
 	const api::Context& rectCtx = obj.at("bbox");
-	int x = static_cast<int>(rectCtx[0].getDouble() * img_w);
-	int y = static_cast<int>(rectCtx[1].getDouble() * img_h);
-	int width = static_cast<int>(rectCtx[2].getDouble() * img_w) - x;
-	int height = static_cast<int>(rectCtx[3].getDouble() * img_h) - y;
+	int x1 = rectCtx[0].getDouble() * image.cols;
+	int y1 = rectCtx[1].getDouble() * image.rows;
+	int x2 = rectCtx[2].getDouble() * image.cols;
+	int y2 = rectCtx[3].getDouble() * image.rows;
 
-	cv::Rect rect(std::max(0, x - int(width * 0.25)), std::max(0, y - int(height * 0.25)),
-				  std::min(img_w, int(width * 1.5)), std::min(img_h, int(height * 1.5)));
+	cv::Point bboxTopLeft = { clip(x1, 0, image.cols), clip(y1, 0 , image.rows) };
+	cv::Point bboxBottomRight = { clip(x2, 0, image.cols), clip(y2, 0 , image.rows) };
 
-	return image(rect);
+	return image(cv::Rect(bboxTopLeft, bboxBottomRight));
 }
 
 void getObjectsWithMaxConfidence(api::Context& data, api::Context& result){

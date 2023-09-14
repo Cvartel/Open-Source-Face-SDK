@@ -389,6 +389,18 @@ TDV_PUBLIC bool TDVContext_isLong(HContext * ctx, ContextEH ** eh)
 	}
 }
 
+TDV_PUBLIC bool TDVContext_isUnsignedLong(HContext * ctx, ContextEH ** eh)
+{
+	try {
+		return reinterpret_cast<internal::Context*>(ctx)->is<uint64_t>();
+	} catch (std::exception& e ) {
+		if(!eh) throw;
+		*eh = new ContextEH(new internal::Error(0x96fac43d, e.what()),
+							nullptr);
+		return 0;
+	}
+}
+
 TDV_PUBLIC bool TDVContext_isDouble(HContext * ctx, ContextEH ** eh)
 {
 	try {
@@ -471,6 +483,20 @@ TDV_PUBLIC int64_t TDVContext_getLong(HContext * ctx, ContextEH ** eh)
 	} catch (std::exception& e ) {
 		if(!eh) throw;
 		*eh = new ContextEH(new internal::Error(0x2353ead7, e.what()),
+							nullptr);
+	}
+	return data;
+}
+
+TDV_PUBLIC uint64_t TDVContext_getUnsignedLong(HContext * ctx, ContextEH ** eh)
+{
+	uint64_t data;
+	try {
+		internal::Context* i_ctx = reinterpret_cast<internal::Context*>(ctx);
+		data = i_ctx->get<uint64_t>();
+	} catch (std::exception& e ) {
+		if(!eh) throw;
+		*eh = new ContextEH(new internal::Error(0x2353ead8, e.what()),
 							nullptr);
 	}
 	return data;

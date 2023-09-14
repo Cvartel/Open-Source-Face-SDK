@@ -80,9 +80,15 @@ void BodyReidentificationModule::postprocess(std::shared_ptr<uint8_t> buffer, td
 	if(buffer)
 	{
 		std::vector<float> embeds = getOutputData(buffer);
-		tdv::data::Context &output_data = data["output_data"];
-		output_data["template"] = std::move(embeds);
+		tdv::data::Context& output_data = data["output_data"];
+		tdv::data::Context& templateData = output_data["template"];
+
 		output_data["template_size"] = embeds.size();
+
+		for (double value : embeds)
+		{
+			templateData.push_back(value);
+		}
 	}
 }
 
